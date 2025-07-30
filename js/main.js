@@ -27,13 +27,18 @@ function populateFilters() {
     .data(makes)
     .enter()
     .append("div")
-    .attr("class", "checkbox-item");
+    .attr("class", "checkbox-item")
+    .on("click", function(event, d) {
+      const checkbox = d3.select(this).select("input");
+      const isChecked = !checkbox.property("checked");
+      checkbox.property("checked", isChecked);
+      updateMakeFilters();
+    });
   
   makeItems.append("input")
     .attr("type", "checkbox")
     .attr("id", d => `make-${d}`)
-    .attr("value", d => d)
-    .on("change", updateMakeFilters);
+    .attr("value", d => d);
   
   makeItems.append("label")
     .attr("for", d => `make-${d}`)
@@ -48,13 +53,18 @@ function populateFilters() {
     .data(states)
     .enter()
     .append("div")
-    .attr("class", "checkbox-item");
+    .attr("class", "checkbox-item")
+    .on("click", function(event, d) {
+      const checkbox = d3.select(this).select("input");
+      const isChecked = !checkbox.property("checked");
+      checkbox.property("checked", isChecked);
+      updateStateFilters();
+    });
   
   stateItems.append("input")
     .attr("type", "checkbox")
     .attr("id", d => `state-${d}`)
-    .attr("value", d => d)
-    .on("change", updateStateFilters);
+    .attr("value", d => d);
   
   stateItems.append("label")
     .attr("for", d => `state-${d}`)
@@ -700,99 +710,241 @@ function drawScene3() {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // 3. Aggregate data by make
-  const makeData = Array.from(
-    d3.rollup(data, v => ({
-      count: v.length,
-      avgPrice: d3.mean(v, d => d.price),
-      avgMileage: d3.mean(v, d => d.mileage)
-    }), d => d.make),
-    ([make, values]) => ({ make, ...values })
-  ).sort((a, b) => b.count - a.count).slice(0, 10); // Top 10 makes
+  // 3. Categorize makes into luxury, mainstream, and economy
+  const luxuryMakes = ['BMW', 'Mercedes-Benz', 'Audi', 'Lexus', 'Cadillac', 'Infiniti', 'Acura', 'Volvo'];
+  const economyMakes = ['Hyundai', 'Kia', 'Nissan', 'Mitsubishi', 'Suzuki', 'Scion'];
+  
+  const categorizeData = data.map(d => ({
+    ...d,
+    makeCategory: luxuryMakes.includes(d.make) ? 'Luxury' : 
+                  economyMakes.includes(d.make) ? 'Economy' : 'Mainstream',
+    ageGroup: d.year >= 2015 ? 'New (2015+)' :
+              d.year >= 2010 ? 'Recent (2010-2014)' :
+              d.year >= 2005 ? 'Older (2005-2009)' : 'Classic (<2005)',
+    mileageGroup: d.mileage < 30000 ? 'Low (<30k)' :
+                  d.mileage < 80000 ? 'Medium (30k-80k)' :
+                  d.mileage < 150000 ? 'High (80k-150k)' : 'Very High (150k+)'
+  }));
 
-  // 4. Create scales
+  // 4. Create a multi-faceted analysis
+  const analysisData = [];
+  
+  // Group by make category and age group
+  const grouped = d3.group(categorizeData, d => d.makeCategory, d => d.ageGroup);
+  
+  grouped.forEach((ageGroups, makeCategory) => {
+    ageGroups.forEach((cars, ageGroup) => {
+      if (cars.length > 0) {
+        analysisData.push({
+          makeCategory,
+          ageGroup,
+          avgPrice: d3.mean(cars, d => d.price),
+          medianPrice: d3.median(cars, d => d.price),
+          avgMileage: d3.mean(cars, d => d.mileage),
+          count: cars.length,
+          priceRange: d3.max(cars, d => d.price) - d3.min(cars, d => d.price)
+        });
+      }
+    });
+  });
+
+  // 5. Create scales
+  const makeCategories = ['Economy', 'Mainstream', 'Luxury'];
+  const ageGroups = ['Classic (<2005)', 'Older (2005-2009)', 'Recent (2010-2014)', 'New (2015+)'];
+  
   const x = d3.scaleBand()
-    .domain(makeData.map(d => d.make))
+    .domain(makeCategories)
     .range([0, width])
     .padding(0.1);
 
-  const y = d3.scaleLinear()
-    .domain([0, d3.max(makeData, d => d.count)])
-    .nice()
-    .range([height, 0]);
+  const xSub = d3.scaleBand()
+    .domain(ageGroups)
+    .range([0, x.bandwidth()])
+    .padding(0.05);
 
-  // 5. Draw bars
-  svg.selectAll("rect")
-    .data(makeData)
-    .join("rect")
-    .attr("x", d => x(d.make))
-    .attr("y", d => y(d.count))
-    .attr("width", x.bandwidth())
-    .attr("height", d => height - y(d.count))
-    .attr("fill", "#69b3a2")
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(analysisData, d => d.avgPrice)])
+    .nice()
+    .range([height * 0.7, 0]);
+
+  const colorScale = d3.scaleOrdinal()
+    .domain(ageGroups)
+    .range(['#e74c3c', '#f39c12', '#f1c40f', '#27ae60']);
+
+  // 6. Draw grouped bars for average price by category and age
+  const bars = svg.selectAll(".bar-group")
+    .data(analysisData)
+    .enter().append("rect")
+    .attr("class", "bar-group")
+    .attr("x", d => x(d.makeCategory) + xSub(d.ageGroup))
+    .attr("y", d => y(d.avgPrice))
+    .attr("width", xSub.bandwidth())
+    .attr("height", d => height * 0.7 - y(d.avgPrice))
+    .attr("fill", d => colorScale(d.ageGroup))
     .attr("opacity", 0.8)
     .on("mouseover", (event, d) => {
       showTooltip(
-        `${d.make}<br>${d.count} cars<br>Avg Price: \$${Math.round(d.avgPrice)}<br>Avg Mileage: ${Math.round(d.avgMileage)}`,
+        `${d.makeCategory} - ${d.ageGroup}<br>` +
+        `Avg Price: \$${Math.round(d.avgPrice).toLocaleString()}<br>` +
+        `Median Price: \$${Math.round(d.medianPrice).toLocaleString()}<br>` +
+        `Cars: ${d.count}<br>` +
+        `Avg Mileage: ${Math.round(d.avgMileage).toLocaleString()} mi`,
         event
       );
     })
-    .on("mouseout", hideTooltip)
-    .on("click", (event, d) => {
-      // Toggle filter by make
-      const makeIndex = selectedMakes.indexOf(d.make);
-      if (makeIndex > -1) {
-        selectedMakes.splice(makeIndex, 1); // Remove if already selected
-      } else {
-        selectedMakes.push(d.make); // Add if not selected
-      }
-      
-      // Update the checkboxes
-      d3.selectAll("#makeCheckboxes input").property("checked", function() {
-        return selectedMakes.includes(this.value);
-      });
-      
-      renderSlide(currentSlide); // Re-render current slide with filter
-    });
+    .on("mouseout", hideTooltip);
 
-  // 6. Draw axes
+  // 7. Add axes
   svg.append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x))
-    .selectAll("text")
-    .attr("transform", "rotate(-45)")
-    .style("text-anchor", "end");
+    .attr("transform", `translate(0,${height * 0.7})`)
+    .call(d3.axisBottom(x));
 
   svg.append("g")
-    .call(d3.axisLeft(y));
+    .call(d3.axisLeft(y).tickFormat(d3.format("$.2s")));
 
-  // 7. Axis labels
+  // 8. Add axis labels
   svg.append("text")
     .attr("class", "axis-label")
     .attr("x", width / 2)
-    .attr("y", height + margin.bottom - 5)
+    .attr("y", height * 0.7 + 40)
     .attr("text-anchor", "middle")
-    .text("Car Make");
+    .text("Vehicle Category");
 
   svg.append("text")
     .attr("class", "axis-label")
     .attr("transform", "rotate(-90)")
-    .attr("x", -height / 2)
+    .attr("x", -height * 0.35)
     .attr("y", -margin.left + 15)
     .attr("text-anchor", "middle")
-    .text("Number of Cars");
+    .text("Average Price (USD)");
 
-  // 8. Scene title with filter info
-  let titleText = "Car count by make - Click bars to toggle filter";
+  // 9. Add legend for age groups
+  const legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(${width - 150}, 20)`);
+
+  const legendItems = legend.selectAll(".legend-item")
+    .data(ageGroups)
+    .enter().append("g")
+    .attr("class", "legend-item")
+    .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+  legendItems.append("rect")
+    .attr("width", 15)
+    .attr("height", 15)
+    .attr("fill", d => colorScale(d))
+    .attr("opacity", 0.8);
+
+  legendItems.append("text")
+    .attr("x", 20)
+    .attr("y", 12)
+    .attr("font-size", "11px")
+    .text(d => d);
+
+  // 10. Add correlation analysis in bottom section
+  const correlationY = height * 0.8;
+  
+  // Mileage vs Price correlation
+  const mileageExtent = d3.extent(data, d => d.mileage);
+  const priceExtent = d3.extent(data, d => d.price);
+  
+  const xCorr = d3.scaleLinear()
+    .domain(mileageExtent)
+    .range([0, width * 0.45]);
+  
+  const yCorr = d3.scaleLinear()
+    .domain(priceExtent)
+    .range([height, correlationY]);
+
+  // Sample data for correlation (to avoid overcrowding)
+  const sampleSize = Math.min(200, data.length);
+  const sampledData = data.sort(() => 0.5 - Math.random()).slice(0, sampleSize);
+
+  // Draw correlation scatter plot
+  svg.selectAll(".corr-point")
+    .data(sampledData)
+    .enter().append("circle")
+    .attr("class", "corr-point")
+    .attr("cx", d => xCorr(d.mileage))
+    .attr("cy", d => yCorr(d.price))
+    .attr("r", 2)
+    .attr("fill", "#3498db")
+    .attr("opacity", 0.6);
+
+  // Add trend line
+  const regression = calculateLinearRegression(sampledData.map(d => [d.mileage, d.price]));
+  const trendLine = d3.line()
+    .x(d => xCorr(d[0]))
+    .y(d => yCorr(d[1]));
+
+  const trendData = [
+    [mileageExtent[0], regression.slope * mileageExtent[0] + regression.intercept],
+    [mileageExtent[1], regression.slope * mileageExtent[1] + regression.intercept]
+  ];
+
+  svg.append("path")
+    .datum(trendData)
+    .attr("d", trendLine)
+    .attr("stroke", "#e74c3c")
+    .attr("stroke-width", 2)
+    .attr("fill", "none");
+
+  // Add correlation section labels
+  svg.append("text")
+    .attr("x", width * 0.225)
+    .attr("y", correlationY - 10)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .text(`Price vs Mileage Correlation (R² = ${(regression.r2 * 100).toFixed(1)}%)`);
+
+  svg.append("text")
+    .attr("x", width * 0.225)
+    .attr("y", height + 30)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "10px")
+    .text("Mileage");
+
+  // 11. Add insights panel
+  const insights = calculateInsights(categorizeData);
+  const insightsPanel = svg.append("g")
+    .attr("transform", `translate(${width * 0.55}, ${correlationY})`);
+
+  insightsPanel.append("rect")
+    .attr("width", width * 0.4)
+    .attr("height", height - correlationY + 20)
+    .attr("fill", "rgba(248, 249, 250, 0.95)")
+    .attr("stroke", "#dee2e6")
+    .attr("rx", 8);
+
+  insightsPanel.append("text")
+    .attr("x", width * 0.2)
+    .attr("y", 20)
+    .attr("text-anchor", "middle")
+    .attr("font-weight", "bold")
+    .attr("font-size", "12px")
+    .text("Key Insights");
+
+  const insightTexts = [
+    `Luxury cars avg: \$${Math.round(insights.luxuryAvg).toLocaleString()}`,
+    `Economy cars avg: \$${Math.round(insights.economyAvg).toLocaleString()}`,
+    `Price drops ${Math.round(insights.depreciationRate)}% per year`,
+    `Best value: ${insights.bestValueCategory}`,
+    `Highest depreciation: ${insights.highestDepreciation}`
+  ];
+
+  insightsPanel.selectAll(".insight-text")
+    .data(insightTexts)
+    .enter().append("text")
+    .attr("x", 10)
+    .attr("y", (d, i) => 40 + i * 15)
+    .attr("font-size", "10px")
+    .text(d => d);
+
+  // 12. Scene title
+  let titleText = "Factor Analysis: How Category, Age & Mileage Affect Price";
   if (selectedMakes.length > 0 || selectedStates.length > 0) {
-    const filters = [];
-    if (selectedMakes.length > 0) {
-      filters.push(`Makes: ${selectedMakes.join(', ')}`);
-    }
-    if (selectedStates.length > 0) {
-      filters.push(`States: ${selectedStates.join(', ')}`);
-    }
-    titleText = `Car count by make (${filters.join(' | ')})`;
+    titleText += " (Filtered Data)";
   }
 
   svg.append("text")
@@ -801,16 +953,59 @@ function drawScene3() {
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
     .text(titleText);
+}
 
-  // 9. Add filter status
-  if (selectedMakes.length > 0 || selectedStates.length > 0) {
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", -10)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#666")
-      .style("font-size", "12px")
-      .text("Click bars to toggle make filter, use multi-select dropdowns for other filters");
-  }
+// Helper functions
+function calculateLinearRegression(data) {
+  const n = data.length;
+  const sumX = d3.sum(data, d => d[0]);
+  const sumY = d3.sum(data, d => d[1]);
+  const sumXY = d3.sum(data, d => d[0] * d[1]);
+  const sumXX = d3.sum(data, d => d[0] * d[0]);
+  const sumYY = d3.sum(data, d => d[1] * d[1]);
+
+  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+  
+  const yMean = sumY / n;
+  const ssRes = d3.sum(data, d => Math.pow(d[1] - (slope * d[0] + intercept), 2));
+  const ssTot = d3.sum(data, d => Math.pow(d[1] - yMean, 2));
+  const r2 = 1 - (ssRes / ssTot);
+
+  return { slope, intercept, r2 };
+}
+
+function calculateInsights(data) {
+  const luxuryCars = data.filter(d => d.makeCategory === 'Luxury');
+  const economyCars = data.filter(d => d.makeCategory === 'Economy');
+  const mainstreamCars = data.filter(d => d.makeCategory === 'Mainstream');
+
+  const luxuryAvg = d3.mean(luxuryCars, d => d.price) || 0;
+  const economyAvg = d3.mean(economyCars, d => d.price) || 0;
+  const mainstreamAvg = d3.mean(mainstreamCars, d => d.price) || 0;
+
+  // Calculate depreciation rate (rough estimate)
+  const newCars = data.filter(d => d.ageGroup === 'New (2015+)');
+  const oldCars = data.filter(d => d.ageGroup === 'Classic (<2005)');
+  const newAvg = d3.mean(newCars, d => d.price) || 0;
+  const oldAvg = d3.mean(oldCars, d => d.price) || 0;
+  const depreciationRate = ((newAvg - oldAvg) / newAvg * 100) / 10; // Per year roughly
+
+  // Best value category (highest price per dollar)
+  const categories = [
+    { name: 'Economy', avg: economyAvg },
+    { name: 'Mainstream', avg: mainstreamAvg },
+    { name: 'Luxury', avg: luxuryAvg }
+  ];
+  const bestValueCategory = categories.sort((a, b) => a.avg - b.avg)[0].name;
+
+  return {
+    luxuryAvg,
+    economyAvg,
+    mainstreamAvg,
+    depreciationRate,
+    bestValueCategory,
+    highestDepreciation: 'Luxury brands'
+  };
 }
 

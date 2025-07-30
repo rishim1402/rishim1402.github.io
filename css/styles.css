@@ -76,19 +76,21 @@ header h1 {
 .checkbox-item {
   display: flex;
   align-items: center;
-  padding: 5px 0;
+  padding: 8px 5px;
   cursor: pointer;
   transition: background-color 0.2s;
+  border-radius: 4px;
+  margin: 2px 0;
 }
 
 .checkbox-item:hover {
   background-color: rgba(0, 123, 255, 0.1);
-  border-radius: 4px;
 }
 
 .checkbox-item input[type="checkbox"] {
   margin-right: 8px;
   transform: scale(1.1);
+  pointer-events: none; /* Disable direct clicking on checkbox */
 }
 
 .checkbox-item label {
@@ -96,6 +98,8 @@ header h1 {
   font-size: 0.9em;
   color: #495057;
   user-select: none;
+  flex: 1; /* Take up remaining space */
+  pointer-events: none; /* Prevent label from interfering with item click */
 }
 
 .filter-actions {
