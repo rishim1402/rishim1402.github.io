@@ -5,8 +5,8 @@ const slides = [drawScene1, drawScene2, drawScene3];
 
 // DIMENSIONS
 const margin = { top: 40, right: 20, bottom: 60, left: 60 };
-const width  = 800 - margin.left - margin.right;
-const height = 500 - margin.top  - margin.bottom;
+const width = 800 - margin.left - margin.right;
+const height = 500 - margin.top - margin.bottom;
 
 // Load data and kick off
 d3.csv("data/car_price.csv", d3.autoType).then(dataset => {
@@ -34,9 +34,9 @@ d3.select("#nextBtn").on("click", () => renderSlide(currentSlide + 1));
 const tooltip = d3.select(".tooltip");
 function showTooltip(html, event) {
   tooltip.html(html)
-         .style("left", (event.pageX + 10) + "px")
-         .style("top",  (event.pageY - 20) + "px")
-         .transition().duration(200).style("opacity", 0.9);
+    .style("left", (event.pageX + 10) + "px")
+    .style("top", (event.pageY - 20) + "px")
+    .transition().duration(200).style("opacity", 0.9);
 }
 function hideTooltip() {
   tooltip.transition().duration(200).style("opacity", 0);
@@ -171,10 +171,10 @@ function drawScene1() {
   // 2. Create SVG container
   const svg = d3.select("#vis")
     .append("svg")
-      .attr("width",  width + margin.left + margin.right)
-      .attr("height", height + margin.top  + margin.bottom)
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
     .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // 3. X‐scale for price (histogram)
   const x = d3.scaleLinear()
@@ -198,28 +198,51 @@ function drawScene1() {
   svg.selectAll("rect")
     .data(bins)
     .enter().append("rect")
-      .attr("x",      d => x(d.x0) + 1)
-      .attr("y",      d => yCount(d.length))
-      .attr("width",  d => Math.max(0, x(d.x1) - x(d.x0) - 1))
-      .attr("height", d => height - yCount(d.length))
-      .attr("fill",   "#69b3a2")
-      .attr("opacity", 0.6)
-      .on("mouseover", (event, d) => {
-        showTooltip(
-          `${d.length} cars priced \$${Math.round(d.x0)}–\$${Math.round(d.x1)}`,
-          event
-        );
-      })
-      .on("mouseout", hideTooltip);
+    .attr("x", d => x(d.x0) + 1)
+    .attr("y", d => yCount(d.length))
+    .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+    .attr("height", d => height - yCount(d.length))
+    .attr("fill", "#69b3a2")
+    .attr("opacity", 0.6)
+    .on("mouseover", (event, d) => {
+      showTooltip(
+        `${d.length} cars priced \$${Math.round(d.x0)}–\$${Math.round(d.x1)}`,
+        event
+      );
+    })
+    .on("mouseout", hideTooltip);
 
   // 7. Bottom axis (price)
   svg.append("g")
-     .attr("transform", `translate(0,${height})`)
-     .call(d3.axisBottom(x).ticks(6).tickFormat(d3.format("$.2s")));
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(6).tickFormat(d3.format("$.2s")));
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(6).tickFormat(d3.format("$.2s")));
+
+  // X‐axis label
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("x", width / 2)
+    .attr("y", height + margin.bottom - 10)
+    .attr("text-anchor", "middle")
+    .text("Price (USD)");
 
   // 8. Left axis (count)
   svg.append("g")
-     .call(d3.axisLeft(yCount));
+    .call(d3.axisLeft(yCount));
+
+  svg.append("g")
+    .call(d3.axisLeft(yCount));
+
+  // Y‐axis label
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left + 15)
+    .attr("text-anchor", "middle")
+    .text("Number of Cars");
 
   // 9. Compute average price by year
   const avgByYear = Array.from(
@@ -243,8 +266,8 @@ function drawScene1() {
 
   // 12. Right axis (avg price)
   svg.append("g")
-     .attr("transform", `translate(${width},0)`)
-     .call(d3.axisRight(yPrice).ticks(4).tickFormat(d3.format("$.2s")));
+    .attr("transform", `translate(${width},0)`)
+    .call(d3.axisRight(yPrice).ticks(4).tickFormat(d3.format("$.2s")));
 
   // 13. Draw the avg‐price line on top
   const line = d3.line()
@@ -252,14 +275,14 @@ function drawScene1() {
     .y(d => yPrice(d.avg));
 
   svg.append("path")
-     .datum(avgByYear)
-     .attr("fill",        "none")
-     .attr("stroke",      "#ff7f0e")
-     .attr("stroke-width", 2)
-     .attr("d",           line);
+    .datum(avgByYear)
+    .attr("fill", "none")
+    .attr("stroke", "#ff0000")
+    .attr("stroke-width", 2)
+    .attr("d", line);
 
   // 14. Compute median drop for annotation
-  const med2015 = avgByYear.find(d => d.year === 2015)?.avg || avgByYear[avgByYear.length-1].avg;
+  const med2015 = avgByYear.find(d => d.year === 2015)?.avg || avgByYear[avgByYear.length - 1].avg;
   const med2005 = avgByYear.find(d => d.year === 2005)?.avg || avgByYear[0].avg;
   const dropPct = ((med2015 - med2005) / med2015 * 100).toFixed(0);
 
@@ -268,28 +291,28 @@ function drawScene1() {
       title: `${dropPct}% drop`,
       label: `Avg price fell from \$${Math.round(med2015)} in 2015 to \$${Math.round(med2005)} in 2005`
     },
-    x:  x2((2015 + 2005) / 2),            // mid‐year
-    y:  yPrice((med2015 + med2005) / 2),  // mid‐value
+    x: x2((2015 + 2005) / 2),            // mid‐year
+    y: yPrice((med2015 + med2005) / 2),  // mid‐value
     dx: 40,
     dy: -30,
     subject: { radius: 4, radiusPadding: 8 }
   }];
 
   svg.append("g")
-     .attr("class", "annotation-group")
-     .call(d3.annotation().annotations(annotations));
+    .attr("class", "annotation-group")
+    .call(d3.annotation().annotations(annotations));
 
   // 15. Scene title
   svg.append("text")
-     .attr("class", "scene-title")
-     .attr("x", width / 2)
-     .attr("y", -margin.top / 2)
-     .attr("text-anchor", "middle")
-     .text(
-       selectedMake
-         ? `Price distribution for ${selectedMake}`
-         : "Price distribution for all makes"
-     );
+    .attr("class", "scene-title")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2)
+    .attr("text-anchor", "middle")
+    .text(
+      selectedMake
+        ? `Price distribution for ${selectedMake}`
+        : "Price distribution for all makes"
+    );
 }
 
 function drawScene2() { /* … */ }

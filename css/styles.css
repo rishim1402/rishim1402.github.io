@@ -42,3 +42,8 @@ button {
   font-size: 12px;
 }
 
+.axis-label {
+  font-size: 12px;
+  font-weight: bold;
+  fill: #333;
+}
