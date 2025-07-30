@@ -8,6 +8,41 @@ body {
   max-width: 900px;
 }
 
+#filters {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  border: 1px solid #dee2e6;
+  margin: 10px auto;
+  max-width: 900px;
+}
+
+#filters label {
+  font-weight: bold;
+  color: #495057;
+}
+
+#filters select {
+  padding: 5px 10px;
+  margin: 0 10px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  background-color: white;
+}
+
+#filters button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#filters button:hover {
+  background-color: #c82333;
+}
+
 #controls {
   text-align: center;
   margin: 10px;

@@ -24,6 +24,21 @@
   <!-- Visualization container -->
   <div id="vis"></div>
 
+  <!-- Filter controls -->
+  <div id="filters" style="text-align: center; margin: 10px 0;">
+    <label for="makeFilter">Filter by Make:</label>
+    <select id="makeFilter">
+      <option value="">All Makes</option>
+    </select>
+    
+    <label for="stateFilter" style="margin-left: 20px;">Filter by State:</label>
+    <select id="stateFilter">
+      <option value="">All States</option>
+    </select>
+    
+    <button id="clearFilters" style="margin-left: 20px;">Clear Filters</button>
+  </div>
+
   <!-- Navigation controls -->
   <div id="controls">
     <button id="prevBtn">Previous</button>

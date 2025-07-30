@@ -1,6 +1,7 @@
 // PARAMETERS & STATE
 let currentSlide = 0;
 let selectedMake = null;
+let selectedState = null;
 const slides = [drawScene1, drawScene2, drawScene3];
 
 // DIMENSIONS
@@ -11,8 +12,67 @@ const height = 500 - margin.top - margin.bottom;
 // Load data and kick off
 d3.csv("data/car_price.csv", d3.autoType).then(dataset => {
   window.carData = dataset;
+  populateFilters();
   renderSlide(0);
 });
+
+// FILTER SETUP
+function populateFilters() {
+  // Populate make filter
+  const makes = Array.from(new Set(carData.map(d => d.make))).sort();
+  const makeSelect = d3.select("#makeFilter");
+  makeSelect.selectAll("option:not(:first-child)").remove();
+  makeSelect.selectAll("option.make-option")
+    .data(makes)
+    .enter()
+    .append("option")
+    .attr("class", "make-option")
+    .attr("value", d => d)
+    .text(d => d);
+
+  // Populate state filter
+  const states = Array.from(new Set(carData.map(d => d.state))).sort();
+  const stateSelect = d3.select("#stateFilter");
+  stateSelect.selectAll("option:not(:first-child)").remove();
+  stateSelect.selectAll("option.state-option")
+    .data(states)
+    .enter()
+    .append("option")
+    .attr("class", "state-option")
+    .attr("value", d => d)
+    .text(d => d);
+
+  // Add event listeners
+  makeSelect.on("change", function() {
+    selectedMake = this.value || null;
+    renderSlide(currentSlide);
+  });
+
+  stateSelect.on("change", function() {
+    selectedState = this.value || null;
+    renderSlide(currentSlide);
+  });
+
+  d3.select("#clearFilters").on("click", function() {
+    selectedMake = null;
+    selectedState = null;
+    d3.select("#makeFilter").property("value", "");
+    d3.select("#stateFilter").property("value", "");
+    renderSlide(currentSlide);
+  });
+}
+
+// HELPER FUNCTION FOR FILTERING
+function getFilteredData() {
+  let data = carData;
+  if (selectedMake) {
+    data = data.filter(d => d.make === selectedMake);
+  }
+  if (selectedState) {
+    data = data.filter(d => d.state === selectedState);
+  }
+  return data;
+}
 
 // RENDER LOGIC
 function renderSlide(idx) {
@@ -163,10 +223,8 @@ function hideTooltip() {
 //      );
 // }
 function drawScene1() {
-  // 1. Filter data by make if a filter is active
-  const data = selectedMake
-    ? carData.filter(d => d.make === selectedMake)
-    : carData;
+  // 1. Filter data using both make and state filters
+  const data = getFilteredData();
 
   // 2. Create SVG container
   const svg = d3.select("#vis")
@@ -176,62 +234,70 @@ function drawScene1() {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // 3. X‐scale for price (histogram)
+  // 3. Calculate statistics for display
+  const stats = {
+    totalCars: data.length,
+    avgPrice: d3.mean(data, d => d.price),
+    medianPrice: d3.median(data, d => d.price),
+    minPrice: d3.min(data, d => d.price),
+    maxPrice: d3.max(data, d => d.price),
+    avgMileage: d3.mean(data, d => d.mileage),
+    avgYear: d3.mean(data, d => d.year),
+    uniqueMakes: new Set(data.map(d => d.make)).size,
+    uniqueStates: new Set(data.map(d => d.state)).size
+  };
+
+  // 4. X‐scale for price (histogram)
   const x = d3.scaleLinear()
     .domain(d3.extent(data, d => d.price))
     .nice()
     .range([0, width]);
 
-  // 4. Build bins
+  // 5. Build bins
   const bins = d3.bin()
     .domain(x.domain())
-    .thresholds(30)
+    .thresholds(25)
     (data.map(d => d.price));
 
-  // 5. Y‐scale for counts
+  // 6. Y‐scale for counts
   const yCount = d3.scaleLinear()
     .domain([0, d3.max(bins, b => b.length)])
     .nice()
-    .range([height, 0]);
+    .range([height * 0.6, 0]); // Use only 60% of height for histogram
 
-  // 6. Draw bars
+  // 7. Draw bars
   svg.selectAll("rect")
     .data(bins)
     .enter().append("rect")
     .attr("x", d => x(d.x0) + 1)
     .attr("y", d => yCount(d.length))
     .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
-    .attr("height", d => height - yCount(d.length))
+    .attr("height", d => height * 0.6 - yCount(d.length))
     .attr("fill", "#69b3a2")
-    .attr("opacity", 0.6)
+    .attr("opacity", 0.7)
     .on("mouseover", (event, d) => {
+      const percentage = ((d.length / data.length) * 100).toFixed(1);
       showTooltip(
-        `${d.length} cars priced \$${Math.round(d.x0)}–\$${Math.round(d.x1)}`,
+        `${d.length} cars (${percentage}%)<br>Price range: \$${Math.round(d.x0)}–\$${Math.round(d.x1)}`,
         event
       );
     })
     .on("mouseout", hideTooltip);
 
-  // 7. Bottom axis (price)
+  // 8. Bottom axis (price)
   svg.append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x).ticks(6).tickFormat(d3.format("$.2s")));
-  svg.append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x).ticks(6).tickFormat(d3.format("$.2s")));
+    .attr("transform", `translate(0,${height * 0.6})`)
+    .call(d3.axisBottom(x).ticks(8).tickFormat(d3.format("$.2s")));
 
   // X‐axis label
   svg.append("text")
     .attr("class", "axis-label")
     .attr("x", width / 2)
-    .attr("y", height + margin.bottom - 10)
+    .attr("y", height * 0.6 + 35)
     .attr("text-anchor", "middle")
     .text("Price (USD)");
 
-  // 8. Left axis (count)
-  svg.append("g")
-    .call(d3.axisLeft(yCount));
-
+  // 9. Left axis (count)
   svg.append("g")
     .call(d3.axisLeft(yCount));
 
@@ -239,12 +305,12 @@ function drawScene1() {
   svg.append("text")
     .attr("class", "axis-label")
     .attr("transform", "rotate(-90)")
-    .attr("x", -height / 2)
+    .attr("x", -height * 0.3)
     .attr("y", -margin.left + 15)
     .attr("text-anchor", "middle")
     .text("Number of Cars");
 
-  // 9. Compute average price by year
+  // 10. Compute average price by year (if we have year data)
   const avgByYear = Array.from(
     d3.rollup(data,
       v => d3.mean(v, d => d.price),
@@ -253,73 +319,173 @@ function drawScene1() {
     ([year, avg]) => ({ year, avg })
   ).sort((a, b) => a.year - b.year);
 
-  // 10. X2‐scale for year (for the line)
-  const x2 = d3.scaleLinear()
-    .domain(d3.extent(avgByYear, d => d.year))
-    .range([0, width]);
+  if (avgByYear.length > 1) {
+    // 11. X2‐scale for year (for the line) - positioned below histogram
+    const x2 = d3.scaleLinear()
+      .domain(d3.extent(avgByYear, d => d.year))
+      .range([0, width]);
 
-  // 11. Y-scale for price (for the line)
-  const yPrice = d3.scaleLinear()
-    .domain(d3.extent(avgByYear, d => d.avg))
-    .nice()
-    .range([height, 0]);
+    // 12. Y-scale for price (for the line) - positioned below histogram  
+    const yPrice = d3.scaleLinear()
+      .domain(d3.extent(avgByYear, d => d.avg))
+      .nice()
+      .range([height * 0.95, height * 0.7]); // Bottom 25% of chart
 
-  // 12. Right axis (avg price)
-  svg.append("g")
-    .attr("transform", `translate(${width},0)`)
-    .call(d3.axisRight(yPrice).ticks(4).tickFormat(d3.format("$.2s")));
+    // 13. Bottom section axis for year
+    svg.append("g")
+      .attr("transform", `translate(0,${height * 0.95})`)
+      .call(d3.axisBottom(x2).tickFormat(d3.format("d")));
 
-  // 13. Draw the avg‐price line on top
-  const line = d3.line()
-    .x(d => x2(d.year))
-    .y(d => yPrice(d.avg));
+    // Year axis label
+    svg.append("text")
+      .attr("class", "axis-label")
+      .attr("x", width / 2)
+      .attr("y", height * 0.95 + 35)
+      .attr("text-anchor", "middle")
+      .text("Year");
 
-  svg.append("path")
-    .datum(avgByYear)
-    .attr("fill", "none")
-    .attr("stroke", "#ff0000")
-    .attr("stroke-width", 2)
-    .attr("d", line);
+    // 14. Right axis (avg price for trend line)
+    svg.append("g")
+      .attr("transform", `translate(${width},0)`)
+      .call(d3.axisRight(yPrice).ticks(4).tickFormat(d3.format("$.2s")));
 
-  // 14. Compute median drop for annotation
-  const med2015 = avgByYear.find(d => d.year === 2015)?.avg || avgByYear[avgByYear.length - 1].avg;
-  const med2005 = avgByYear.find(d => d.year === 2005)?.avg || avgByYear[0].avg;
-  const dropPct = ((med2015 - med2005) / med2015 * 100).toFixed(0);
+    // Price trend axis label
+    svg.append("text")
+      .attr("class", "axis-label")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height * 0.82)
+      .attr("y", width + 45)
+      .attr("text-anchor", "middle")
+      .text("Avg Price");
 
-  const annotations = [{
-    note: {
-      title: `${dropPct}% drop`,
-      label: `Avg price fell from \$${Math.round(med2015)} in 2015 to \$${Math.round(med2005)} in 2005`
-    },
-    x: x2((2015 + 2005) / 2),            // mid‐year
-    y: yPrice((med2015 + med2005) / 2),  // mid‐value
-    dx: 40,
-    dy: -30,
-    subject: { radius: 4, radiusPadding: 8 }
-  }];
+    // 15. Draw the avg‐price trend line
+    const line = d3.line()
+      .x(d => x2(d.year))
+      .y(d => yPrice(d.avg));
 
-  svg.append("g")
-    .attr("class", "annotation-group")
-    .call(d3.annotation().annotations(annotations));
+    svg.append("path")
+      .datum(avgByYear)
+      .attr("fill", "none")
+      .attr("stroke", "#ff4444")
+      .attr("stroke-width", 3)
+      .attr("d", line);
 
-  // 15. Scene title
+    // Add dots on the line
+    svg.selectAll(".trend-dot")
+      .data(avgByYear)
+      .enter().append("circle")
+      .attr("class", "trend-dot")
+      .attr("cx", d => x2(d.year))
+      .attr("cy", d => yPrice(d.avg))
+      .attr("r", 4)
+      .attr("fill", "#ff4444")
+      .on("mouseover", (event, d) => {
+        showTooltip(`Year: ${d.year}<br>Avg Price: \$${Math.round(d.avg)}`, event);
+      })
+      .on("mouseout", hideTooltip);
+  }
+
+  // 16. Statistics panel
+  const statsPanel = svg.append("g")
+    .attr("class", "stats-panel")
+    .attr("transform", `translate(${width - 200}, 10)`);
+
+  // Background for stats
+  statsPanel.append("rect")
+    .attr("width", 190)
+    .attr("height", 160)
+    .attr("fill", "#f8f9fa")
+    .attr("stroke", "#dee2e6")
+    .attr("stroke-width", 1)
+    .attr("rx", 5);
+
+  // Stats title
+  statsPanel.append("text")
+    .attr("x", 95)
+    .attr("y", 15)
+    .attr("text-anchor", "middle")
+    .attr("font-weight", "bold")
+    .attr("font-size", "14px")
+    .text("Dataset Statistics");
+
+  // Stats content
+  const statsText = [
+    `Total Cars: ${stats.totalCars.toLocaleString()}`,
+    `Avg Price: \$${Math.round(stats.avgPrice).toLocaleString()}`,
+    `Median Price: \$${Math.round(stats.medianPrice).toLocaleString()}`,
+    `Price Range: \$${Math.round(stats.minPrice).toLocaleString()} - \$${Math.round(stats.maxPrice).toLocaleString()}`,
+    `Avg Mileage: ${Math.round(stats.avgMileage).toLocaleString()} mi`,
+    `Avg Year: ${Math.round(stats.avgYear)}`,
+    `Makes: ${stats.uniqueMakes}`,
+    `States: ${stats.uniqueStates}`
+  ];
+
+  statsPanel.selectAll(".stat-line")
+    .data(statsText)
+    .enter().append("text")
+    .attr("class", "stat-line")
+    .attr("x", 10)
+    .attr("y", (d, i) => 35 + i * 16)
+    .attr("font-size", "11px")
+    .attr("fill", "#495057")
+    .text(d => d);
+
+  // 17. Scene title with filter info
+  let titleText = "Car Price Distribution";
+  if (selectedMake || selectedState) {
+    const filters = [];
+    if (selectedMake) filters.push(`Make: ${selectedMake}`);
+    if (selectedState) filters.push(`State: ${selectedState}`);
+    titleText += ` (${filters.join(', ')})`;
+  }
+
   svg.append("text")
     .attr("class", "scene-title")
     .attr("x", width / 2)
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
-    .text(
-      selectedMake
-        ? `Price distribution for ${selectedMake}`
-        : "Price distribution for all makes"
-    );
+    .attr("font-size", "16px")
+    .text(titleText);
+
+  // 18. Add median and mean indicators on histogram
+  svg.append("line")
+    .attr("x1", x(stats.medianPrice))
+    .attr("x2", x(stats.medianPrice))
+    .attr("y1", 0)
+    .attr("y2", height * 0.6)
+    .attr("stroke", "#ff6b35")
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", "5,5");
+
+  svg.append("text")
+    .attr("x", x(stats.medianPrice))
+    .attr("y", -5)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "10px")
+    .attr("fill", "#ff6b35")
+    .text(`Median: \$${Math.round(stats.medianPrice).toLocaleString()}`);
+
+  svg.append("line")
+    .attr("x1", x(stats.avgPrice))
+    .attr("x2", x(stats.avgPrice))
+    .attr("y1", 0)
+    .attr("y2", height * 0.6)
+    .attr("stroke", "#2a9d8f")
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", "3,3");
+
+  svg.append("text")
+    .attr("x", x(stats.avgPrice))
+    .attr("y", -15)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "10px")
+    .attr("fill", "#2a9d8f")
+    .text(`Mean: \$${Math.round(stats.avgPrice).toLocaleString()}`);
 }
 
 function drawScene2() {
-  // 1. Filter data by make if a filter is active
-  const data = selectedMake
-    ? carData.filter(d => d.make === selectedMake)
-    : carData;
+  // 1. Filter data using both make and state filters
+  const data = getFilteredData();
 
   // 2. Create SVG container
   const svg = d3.select("#vis")
@@ -377,10 +543,10 @@ function drawScene2() {
     .attr("cx", d => x(d.mileage))
     .attr("cy", d => y(d.price))
     .attr("r", 3)
-    .attr("fill", "#999")
-    .attr("opacity", 0.6)
+    .attr("fill", d => color(d.state))
+    .attr("opacity", 0.7)
     .on("mouseover", (e, d) => showTooltip(
-      `${d.make} ${d.model}<br>\$${d.price}<br>${d.mileage} mi`, e))
+      `${d.make} ${d.model}<br>\$${d.price}<br>${d.mileage} mi<br>State: ${d.state}`, e))
     .on("mouseout", hideTooltip);
 
   // 8. Add a brush for selection
@@ -402,19 +568,50 @@ function drawScene2() {
     .style("border", "1px solid #ddd")
     .style("padding", "10px");
 
-  // 10. Scene title
+  // 10. Scene title with filter info
+  let titleText = "Price vs Mileage - Select cars with brush";
+  if (selectedMake || selectedState) {
+    const filters = [];
+    if (selectedMake) filters.push(`Make: ${selectedMake}`);
+    if (selectedState) filters.push(`State: ${selectedState}`);
+    titleText += ` (${filters.join(', ')})`;
+  }
+
   svg.append("text")
     .attr("class", "scene-title")
     .attr("x", width / 2)
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
-    .text("Price vs Mileage - Select cars with brush");
+    .text(titleText);
 
-  // 11. Brush handler
+  // 11. Add legend for states (if multiple states visible)
+  if (states.length > 1 && states.length <= 10) {
+    const legend = svg.append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${width - 100}, 20)`);
+
+    const legendItems = legend.selectAll(".legend-item")
+      .data(states)
+      .enter().append("g")
+      .attr("class", "legend-item")
+      .attr("transform", (d, i) => `translate(0, ${i * 15})`);
+
+    legendItems.append("circle")
+      .attr("r", 4)
+      .attr("fill", d => color(d));
+
+    legendItems.append("text")
+      .attr("x", 10)
+      .attr("y", 4)
+      .attr("font-size", "10px")
+      .text(d => d);
+  }
+
+  // 12. Brush handler
   function brushed({ selection }) {
     if (!selection) {
       // clear if user clears brush
-      points.attr("fill", "#999").attr("opacity", 0.6);
+      points.attr("fill", d => color(d.state)).attr("opacity", 0.7);
       return d3.select("#selectionList").html("<p>No cars selected. Use the brush to select cars.</p>");
     }
     const [[x0, y0], [x1, y1]] = selection;
@@ -427,7 +624,7 @@ function drawScene2() {
     points.attr("fill", d =>
       selected.includes(d) ? color(d.state) : "#ddd"
     ).attr("opacity", d =>
-      selected.includes(d) ? 0.9 : 0.2
+      selected.includes(d) ? 1.0 : 0.2
     );
     // list them below
     const listContainer = d3.select("#selectionList").html("");
@@ -439,17 +636,15 @@ function drawScene2() {
         .selectAll("p")
         .data(selected, d => `${d.make}-${d.model}-${d.mileage}`);
       list.enter().append("p")
-        .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price} — ${d.state} — ${d.mileage} mi`)
+        .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price} — ${d.state} — ${d.mileage} mi — Year: ${d.year}`)
         .style("color", d => color(d.state))
         .style("margin", "2px 0");
     }
   }
 }
 function drawScene3() {
-  // 1. Filter data by make if a filter is active
-  const data = selectedMake
-    ? carData.filter(d => d.make === selectedMake)
-    : carData;
+  // 1. Filter data using both make and state filters
+  const data = getFilteredData();
 
   // 2. Create SVG container
   const svg = d3.select("#vis")
@@ -500,6 +695,7 @@ function drawScene3() {
     .on("click", (event, d) => {
       // Toggle filter by make
       selectedMake = selectedMake === d.make ? null : d.make;
+      d3.select("#makeFilter").property("value", selectedMake || "");
       renderSlide(currentSlide); // Re-render current slide with filter
     });
 
@@ -530,27 +726,31 @@ function drawScene3() {
     .attr("text-anchor", "middle")
     .text("Number of Cars");
 
-  // 8. Scene title
+  // 8. Scene title with filter info
+  let titleText = "Car count by make - Click bars to filter";
+  if (selectedMake || selectedState) {
+    const filters = [];
+    if (selectedMake) filters.push(`Make: ${selectedMake}`);
+    if (selectedState) filters.push(`State: ${selectedState}`);
+    titleText = `Car count by make (${filters.join(', ')})`;
+  }
+
   svg.append("text")
     .attr("class", "scene-title")
     .attr("x", width / 2)
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
-    .text(
-      selectedMake
-        ? `Car count by make (filtered by ${selectedMake})`
-        : "Car count by make - Click bars to filter"
-    );
+    .text(titleText);
 
   // 9. Add filter status
-  if (selectedMake) {
+  if (selectedMake || selectedState) {
     svg.append("text")
       .attr("x", width / 2)
       .attr("y", -10)
       .attr("text-anchor", "middle")
       .attr("fill", "#666")
       .style("font-size", "12px")
-      .text(`Filter active: ${selectedMake} (click bar again to clear)`);
+      .text("Click bars to toggle make filter, use dropdowns for other filters");
   }
 }
 
