@@ -316,13 +316,61 @@ function drawScene1() {
 }
 
 function drawScene2() {
-  alert("Scene 2: Scatter plot with brushing and selection");
+  // 1. Filter data by make if a filter is active
+  const data = selectedMake
+    ? carData.filter(d => d.make === selectedMake)
+    : carData;
+
+  // 2. Create SVG container
+  const svg = d3.select("#vis")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // 3. Create scales
+  const x = d3.scaleLinear()
+    .domain(d3.extent(data, d => d.mileage))
+    .nice()
+    .range([0, width]);
+
+  const y = d3.scaleLinear()
+    .domain(d3.extent(data, d => d.price))
+    .nice()
+    .range([height, 0]);
+
+  // 4. Create color scale for states
   const states = Array.from(new Set(data.map(d => d.state)));
   const color = d3.scaleOrdinal()
     .domain(states)
     .range(d3.schemeCategory10);
 
-  // 2) Draw the points (update to use color by state when filtered)
+  // 5. Draw axes
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x));
+
+  svg.append("g")
+    .call(d3.axisLeft(y).tickFormat(d3.format("$.2s")));
+
+  // 6. Axis labels
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("x", width / 2)
+    .attr("y", height + margin.bottom - 10)
+    .attr("text-anchor", "middle")
+    .text("Mileage");
+
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left + 15)
+    .attr("text-anchor", "middle")
+    .text("Price (USD)");
+
+  // 7. Draw the scatter plot points
   const points = svg.selectAll("circle")
     .data(data)
     .join("circle")
@@ -335,7 +383,7 @@ function drawScene2() {
       `${d.make} ${d.model}<br>\$${d.price}<br>${d.mileage} mi`, e))
     .on("mouseout", hideTooltip);
 
-  // 3) Add a brush
+  // 8. Add a brush for selection
   const brush = d3.brush()
     .extent([[0, 0], [width, height]])
     .on("end", brushed);
@@ -344,20 +392,30 @@ function drawScene2() {
     .attr("class", "brush")
     .call(brush);
 
-  // 4) Container for listing selected cars
+  // 9. Container for listing selected cars
   d3.select("#vis")
     .append("div")
     .attr("id", "selectionList")
     .style("max-height", "200px")
     .style("overflow", "auto")
-    .style("margin-top", "10px");
+    .style("margin-top", "10px")
+    .style("border", "1px solid #ddd")
+    .style("padding", "10px");
 
-  // 5) Brush handler
+  // 10. Scene title
+  svg.append("text")
+    .attr("class", "scene-title")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2)
+    .attr("text-anchor", "middle")
+    .text("Price vs Mileage - Select cars with brush");
+
+  // 11. Brush handler
   function brushed({ selection }) {
     if (!selection) {
       // clear if user clears brush
-      points.attr("fill", "#999");
-      return d3.select("#selectionList").html("");
+      points.attr("fill", "#999").attr("opacity", 0.6);
+      return d3.select("#selectionList").html("<p>No cars selected. Use the brush to select cars.</p>");
     }
     const [[x0, y0], [x1, y1]] = selection;
     // find selected points
@@ -372,15 +430,127 @@ function drawScene2() {
       selected.includes(d) ? 0.9 : 0.2
     );
     // list them below
-    const list = d3.select("#selectionList")
-      .html("")
-      .selectAll("p")
-      .data(selected, d => `${d.make}-${d.model}-${d.mileage}`);
-    list.enter().append("p")
-      .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price} — ${d.state}`)
-      .style("color", d => color(d.state))
-      .style("margin", "2px 0");
+    const listContainer = d3.select("#selectionList").html("");
+    if (selected.length === 0) {
+      listContainer.html("<p>No cars in selected area.</p>");
+    } else {
+      listContainer.append("h4").text(`Selected Cars (${selected.length})`);
+      const list = listContainer
+        .selectAll("p")
+        .data(selected, d => `${d.make}-${d.model}-${d.mileage}`);
+      list.enter().append("p")
+        .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price} — ${d.state} — ${d.mileage} mi`)
+        .style("color", d => color(d.state))
+        .style("margin", "2px 0");
+    }
   }
 }
-function drawScene3() { /* … */ }
+function drawScene3() {
+  // 1. Filter data by make if a filter is active
+  const data = selectedMake
+    ? carData.filter(d => d.make === selectedMake)
+    : carData;
+
+  // 2. Create SVG container
+  const svg = d3.select("#vis")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // 3. Aggregate data by make
+  const makeData = Array.from(
+    d3.rollup(data, v => ({
+      count: v.length,
+      avgPrice: d3.mean(v, d => d.price),
+      avgMileage: d3.mean(v, d => d.mileage)
+    }), d => d.make),
+    ([make, values]) => ({ make, ...values })
+  ).sort((a, b) => b.count - a.count).slice(0, 10); // Top 10 makes
+
+  // 4. Create scales
+  const x = d3.scaleBand()
+    .domain(makeData.map(d => d.make))
+    .range([0, width])
+    .padding(0.1);
+
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(makeData, d => d.count)])
+    .nice()
+    .range([height, 0]);
+
+  // 5. Draw bars
+  svg.selectAll("rect")
+    .data(makeData)
+    .join("rect")
+    .attr("x", d => x(d.make))
+    .attr("y", d => y(d.count))
+    .attr("width", x.bandwidth())
+    .attr("height", d => height - y(d.count))
+    .attr("fill", "#69b3a2")
+    .attr("opacity", 0.8)
+    .on("mouseover", (event, d) => {
+      showTooltip(
+        `${d.make}<br>${d.count} cars<br>Avg Price: \$${Math.round(d.avgPrice)}<br>Avg Mileage: ${Math.round(d.avgMileage)}`,
+        event
+      );
+    })
+    .on("mouseout", hideTooltip)
+    .on("click", (event, d) => {
+      // Toggle filter by make
+      selectedMake = selectedMake === d.make ? null : d.make;
+      renderSlide(currentSlide); // Re-render current slide with filter
+    });
+
+  // 6. Draw axes
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+    .style("text-anchor", "end");
+
+  svg.append("g")
+    .call(d3.axisLeft(y));
+
+  // 7. Axis labels
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("x", width / 2)
+    .attr("y", height + margin.bottom - 5)
+    .attr("text-anchor", "middle")
+    .text("Car Make");
+
+  svg.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -height / 2)
+    .attr("y", -margin.left + 15)
+    .attr("text-anchor", "middle")
+    .text("Number of Cars");
+
+  // 8. Scene title
+  svg.append("text")
+    .attr("class", "scene-title")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2)
+    .attr("text-anchor", "middle")
+    .text(
+      selectedMake
+        ? `Car count by make (filtered by ${selectedMake})`
+        : "Car count by make - Click bars to filter"
+    );
+
+  // 9. Add filter status
+  if (selectedMake) {
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", -10)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#666")
+      .style("font-size", "12px")
+      .text(`Filter active: ${selectedMake} (click bar again to clear)`);
+  }
+}
 
