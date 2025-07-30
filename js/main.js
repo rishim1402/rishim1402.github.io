@@ -316,6 +316,7 @@ function drawScene1() {
 }
 
 function drawScene2() {
+  alert("Scene 2: Scatter plot with brushing and selection");
   const states = Array.from(new Set(data.map(d => d.state)));
   const color = d3.scaleOrdinal()
     .domain(states)
