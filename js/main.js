@@ -315,6 +315,71 @@ function drawScene1() {
     );
 }
 
-function drawScene2() { /* … */ }
+function drawScene2() {
+  const states = Array.from(new Set(data.map(d => d.state)));
+  const color = d3.scaleOrdinal()
+    .domain(states)
+    .range(d3.schemeCategory10);
+
+  // 2) Draw the points (update to use color by state when filtered)
+  const points = svg.selectAll("circle")
+    .data(data)
+    .join("circle")
+    .attr("cx", d => x(d.mileage))
+    .attr("cy", d => y(d.price))
+    .attr("r", 3)
+    .attr("fill", "#999")
+    .attr("opacity", 0.6)
+    .on("mouseover", (e, d) => showTooltip(
+      `${d.make} ${d.model}<br>\$${d.price}<br>${d.mileage} mi`, e))
+    .on("mouseout", hideTooltip);
+
+  // 3) Add a brush
+  const brush = d3.brush()
+    .extent([[0, 0], [width, height]])
+    .on("end", brushed);
+
+  svg.append("g")
+    .attr("class", "brush")
+    .call(brush);
+
+  // 4) Container for listing selected cars
+  d3.select("#vis")
+    .append("div")
+    .attr("id", "selectionList")
+    .style("max-height", "200px")
+    .style("overflow", "auto")
+    .style("margin-top", "10px");
+
+  // 5) Brush handler
+  function brushed({ selection }) {
+    if (!selection) {
+      // clear if user clears brush
+      points.attr("fill", "#999");
+      return d3.select("#selectionList").html("");
+    }
+    const [[x0, y0], [x1, y1]] = selection;
+    // find selected points
+    const selected = data.filter(d =>
+      x(d.mileage) >= x0 && x(d.mileage) <= x1 &&
+      y(d.price) >= y0 && y(d.price) <= y1
+    );
+    // highlight in scatter
+    points.attr("fill", d =>
+      selected.includes(d) ? color(d.state) : "#ddd"
+    ).attr("opacity", d =>
+      selected.includes(d) ? 0.9 : 0.2
+    );
+    // list them below
+    const list = d3.select("#selectionList")
+      .html("")
+      .selectAll("p")
+      .data(selected, d => `${d.make}-${d.model}-${d.mileage}`);
+    list.enter().append("p")
+      .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price} — ${d.state}`)
+      .style("color", d => color(d.state))
+      .style("margin", "2px 0");
+  }
+}
 function drawScene3() { /* … */ }
 
