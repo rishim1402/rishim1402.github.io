@@ -1,7 +1,7 @@
 // PARAMETERS & STATE
 let currentSlide = 0;
-let selectedMake = null;
-let selectedState = null;
+let selectedMakes = [];
+let selectedStates = [];
 const slides = [drawScene1, drawScene2, drawScene3];
 
 // DIMENSIONS
@@ -21,43 +21,41 @@ function populateFilters() {
   // Populate make filter
   const makes = Array.from(new Set(carData.map(d => d.make))).sort();
   const makeSelect = d3.select("#makeFilter");
-  makeSelect.selectAll("option:not(:first-child)").remove();
-  makeSelect.selectAll("option.make-option")
+  makeSelect.selectAll("option").remove();
+  makeSelect.selectAll("option")
     .data(makes)
     .enter()
     .append("option")
-    .attr("class", "make-option")
     .attr("value", d => d)
     .text(d => d);
 
   // Populate state filter
   const states = Array.from(new Set(carData.map(d => d.state))).sort();
   const stateSelect = d3.select("#stateFilter");
-  stateSelect.selectAll("option:not(:first-child)").remove();
-  stateSelect.selectAll("option.state-option")
+  stateSelect.selectAll("option").remove();
+  stateSelect.selectAll("option")
     .data(states)
     .enter()
     .append("option")
-    .attr("class", "state-option")
     .attr("value", d => d)
     .text(d => d);
 
   // Add event listeners
   makeSelect.on("change", function() {
-    selectedMake = this.value || null;
+    selectedMakes = Array.from(this.selectedOptions).map(option => option.value);
     renderSlide(currentSlide);
   });
 
   stateSelect.on("change", function() {
-    selectedState = this.value || null;
+    selectedStates = Array.from(this.selectedOptions).map(option => option.value);
     renderSlide(currentSlide);
   });
 
   d3.select("#clearFilters").on("click", function() {
-    selectedMake = null;
-    selectedState = null;
-    d3.select("#makeFilter").property("value", "");
-    d3.select("#stateFilter").property("value", "");
+    selectedMakes = [];
+    selectedStates = [];
+    makeSelect.selectAll("option").property("selected", false);
+    stateSelect.selectAll("option").property("selected", false);
     renderSlide(currentSlide);
   });
 }
@@ -65,11 +63,11 @@ function populateFilters() {
 // HELPER FUNCTION FOR FILTERING
 function getFilteredData() {
   let data = carData;
-  if (selectedMake) {
-    data = data.filter(d => d.make === selectedMake);
+  if (selectedMakes.length > 0) {
+    data = data.filter(d => selectedMakes.includes(d.make));
   }
-  if (selectedState) {
-    data = data.filter(d => d.state === selectedState);
+  if (selectedStates.length > 0) {
+    data = data.filter(d => selectedStates.includes(d.state));
   }
   return data;
 }
@@ -356,7 +354,7 @@ function drawScene1() {
       .attr("x", -height * 0.82)
       .attr("y", width + 45)
       .attr("text-anchor", "middle")
-      .text("Avg Price");
+      .text("Avg Price Trend");
 
     // 15. Draw the avg‐price trend line
     const line = d3.line()
@@ -369,6 +367,17 @@ function drawScene1() {
       .attr("stroke", "#ff4444")
       .attr("stroke-width", 3)
       .attr("d", line);
+
+    // Add trend line title
+    svg.append("text")
+      .attr("class", "trend-title")
+      .attr("x", width / 2)
+      .attr("y", height * 0.68)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("font-weight", "bold")
+      .attr("fill", "#ff4444")
+      .text("Average Price Trend Over Years");
 
     // Add dots on the line
     svg.selectAll(".trend-dot")
@@ -432,11 +441,15 @@ function drawScene1() {
 
   // 17. Scene title with filter info
   let titleText = "Car Price Distribution";
-  if (selectedMake || selectedState) {
+  if (selectedMakes.length > 0 || selectedStates.length > 0) {
     const filters = [];
-    if (selectedMake) filters.push(`Make: ${selectedMake}`);
-    if (selectedState) filters.push(`State: ${selectedState}`);
-    titleText += ` (${filters.join(', ')})`;
+    if (selectedMakes.length > 0) {
+      filters.push(`Makes: ${selectedMakes.join(', ')}`);
+    }
+    if (selectedStates.length > 0) {
+      filters.push(`States: ${selectedStates.join(', ')}`);
+    }
+    titleText += ` (${filters.join(' | ')})`;
   }
 
   svg.append("text")
@@ -570,11 +583,15 @@ function drawScene2() {
 
   // 10. Scene title with filter info
   let titleText = "Price vs Mileage - Select cars with brush";
-  if (selectedMake || selectedState) {
+  if (selectedMakes.length > 0 || selectedStates.length > 0) {
     const filters = [];
-    if (selectedMake) filters.push(`Make: ${selectedMake}`);
-    if (selectedState) filters.push(`State: ${selectedState}`);
-    titleText += ` (${filters.join(', ')})`;
+    if (selectedMakes.length > 0) {
+      filters.push(`Makes: ${selectedMakes.join(', ')}`);
+    }
+    if (selectedStates.length > 0) {
+      filters.push(`States: ${selectedStates.join(', ')}`);
+    }
+    titleText += ` (${filters.join(' | ')})`;
   }
 
   svg.append("text")
@@ -694,8 +711,19 @@ function drawScene3() {
     .on("mouseout", hideTooltip)
     .on("click", (event, d) => {
       // Toggle filter by make
-      selectedMake = selectedMake === d.make ? null : d.make;
-      d3.select("#makeFilter").property("value", selectedMake || "");
+      const makeIndex = selectedMakes.indexOf(d.make);
+      if (makeIndex > -1) {
+        selectedMakes.splice(makeIndex, 1); // Remove if already selected
+      } else {
+        selectedMakes.push(d.make); // Add if not selected
+      }
+      
+      // Update the select element
+      const makeSelect = d3.select("#makeFilter");
+      makeSelect.selectAll("option").property("selected", function() {
+        return selectedMakes.includes(this.value);
+      });
+      
       renderSlide(currentSlide); // Re-render current slide with filter
     });
 
@@ -727,12 +755,16 @@ function drawScene3() {
     .text("Number of Cars");
 
   // 8. Scene title with filter info
-  let titleText = "Car count by make - Click bars to filter";
-  if (selectedMake || selectedState) {
+  let titleText = "Car count by make - Click bars to toggle filter";
+  if (selectedMakes.length > 0 || selectedStates.length > 0) {
     const filters = [];
-    if (selectedMake) filters.push(`Make: ${selectedMake}`);
-    if (selectedState) filters.push(`State: ${selectedState}`);
-    titleText = `Car count by make (${filters.join(', ')})`;
+    if (selectedMakes.length > 0) {
+      filters.push(`Makes: ${selectedMakes.join(', ')}`);
+    }
+    if (selectedStates.length > 0) {
+      filters.push(`States: ${selectedStates.join(', ')}`);
+    }
+    titleText = `Car count by make (${filters.join(' | ')})`;
   }
 
   svg.append("text")
@@ -743,14 +775,14 @@ function drawScene3() {
     .text(titleText);
 
   // 9. Add filter status
-  if (selectedMake || selectedState) {
+  if (selectedMakes.length > 0 || selectedStates.length > 0) {
     svg.append("text")
       .attr("x", width / 2)
       .attr("y", -10)
       .attr("text-anchor", "middle")
       .attr("fill", "#666")
       .style("font-size", "12px")
-      .text("Click bars to toggle make filter, use dropdowns for other filters");
+      .text("Click bars to toggle make filter, use multi-select dropdowns for other filters");
   }
 }
 

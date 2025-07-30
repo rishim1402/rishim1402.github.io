@@ -28,6 +28,17 @@ body {
   border: 1px solid #ced4da;
   border-radius: 3px;
   background-color: white;
+  vertical-align: top;
+}
+
+#filters select[multiple] {
+  height: auto;
+  min-height: 80px;
+}
+
+#filters select[multiple] option:checked {
+  background-color: #007bff;
+  color: white;
 }
 
 #filters button {
