@@ -1,0 +1,44 @@
+body {
+  font-family: sans-serif;
+  margin: 20px;
+}
+
+#vis {
+  margin: 0 auto;
+  max-width: 900px;
+}
+
+#controls {
+  text-align: center;
+  margin: 10px;
+}
+
+button {
+  padding: 8px 16px;
+  margin: 0 5px;
+  font-size: 14px;
+}
+
+.tooltip {
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.scene-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.annotation-note-title {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.annotation-note-label {
+  font-size: 12px;
+}
+
