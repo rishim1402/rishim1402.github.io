@@ -5,9 +5,9 @@ let selectedStates = [];
 const slides = [drawScene1, drawScene2, drawScene3];
 
 // DIMENSIONS
-const margin = { top: 40, right: 20, bottom: 60, left: 60 };
-const width = 800 - margin.left - margin.right;
-const height = 500 - margin.top - margin.bottom;
+const margin = { top: 60, right: 80, bottom: 80, left: 80 };
+const width = 900 - margin.left - margin.right;
+const height = 600 - margin.top - margin.bottom;
 
 // Load data and kick off
 d3.csv("data/car_price.csv", d3.autoType).then(dataset => {
@@ -18,46 +18,72 @@ d3.csv("data/car_price.csv", d3.autoType).then(dataset => {
 
 // FILTER SETUP
 function populateFilters() {
-  // Populate make filter
+  // Populate make checkboxes
   const makes = Array.from(new Set(carData.map(d => d.make))).sort();
-  const makeSelect = d3.select("#makeFilter");
-  makeSelect.selectAll("option").remove();
-  makeSelect.selectAll("option")
+  const makeContainer = d3.select("#makeCheckboxes");
+  makeContainer.selectAll("*").remove();
+  
+  const makeItems = makeContainer.selectAll(".checkbox-item")
     .data(makes)
     .enter()
-    .append("option")
+    .append("div")
+    .attr("class", "checkbox-item");
+  
+  makeItems.append("input")
+    .attr("type", "checkbox")
+    .attr("id", d => `make-${d}`)
     .attr("value", d => d)
+    .on("change", updateMakeFilters);
+  
+  makeItems.append("label")
+    .attr("for", d => `make-${d}`)
     .text(d => d);
 
-  // Populate state filter
+  // Populate state checkboxes
   const states = Array.from(new Set(carData.map(d => d.state))).sort();
-  const stateSelect = d3.select("#stateFilter");
-  stateSelect.selectAll("option").remove();
-  stateSelect.selectAll("option")
+  const stateContainer = d3.select("#stateCheckboxes");
+  stateContainer.selectAll("*").remove();
+  
+  const stateItems = stateContainer.selectAll(".checkbox-item")
     .data(states)
     .enter()
-    .append("option")
+    .append("div")
+    .attr("class", "checkbox-item");
+  
+  stateItems.append("input")
+    .attr("type", "checkbox")
+    .attr("id", d => `state-${d}`)
     .attr("value", d => d)
+    .on("change", updateStateFilters);
+  
+  stateItems.append("label")
+    .attr("for", d => `state-${d}`)
     .text(d => d);
 
-  // Add event listeners
-  makeSelect.on("change", function() {
-    selectedMakes = Array.from(this.selectedOptions).map(option => option.value);
-    renderSlide(currentSlide);
-  });
-
-  stateSelect.on("change", function() {
-    selectedStates = Array.from(this.selectedOptions).map(option => option.value);
-    renderSlide(currentSlide);
-  });
-
+  // Clear filters button
   d3.select("#clearFilters").on("click", function() {
     selectedMakes = [];
     selectedStates = [];
-    makeSelect.selectAll("option").property("selected", false);
-    stateSelect.selectAll("option").property("selected", false);
+    d3.selectAll("#makeCheckboxes input").property("checked", false);
+    d3.selectAll("#stateCheckboxes input").property("checked", false);
     renderSlide(currentSlide);
   });
+}
+
+function updateMakeFilters() {
+  selectedMakes = [];
+  d3.selectAll("#makeCheckboxes input:checked").each(function() {
+    selectedMakes.push(this.value);
+  });
+  renderSlide(currentSlide);
+}
+
+function updateStateFilters() {
+  selectedStates = [];
+  d3.selectAll("#stateCheckboxes input:checked").each(function() {
+    selectedStates.push(this.value);
+  });
+  renderSlide(currentSlide);
 }
 
 // HELPER FUNCTION FOR FILTERING
@@ -261,7 +287,7 @@ function drawScene1() {
   const yCount = d3.scaleLinear()
     .domain([0, d3.max(bins, b => b.length)])
     .nice()
-    .range([height * 0.6, 0]); // Use only 60% of height for histogram
+    .range([height * 0.55, 0]); // Use only 55% of height for histogram
 
   // 7. Draw bars
   svg.selectAll("rect")
@@ -270,7 +296,7 @@ function drawScene1() {
     .attr("x", d => x(d.x0) + 1)
     .attr("y", d => yCount(d.length))
     .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
-    .attr("height", d => height * 0.6 - yCount(d.length))
+    .attr("height", d => height * 0.55 - yCount(d.length))
     .attr("fill", "#69b3a2")
     .attr("opacity", 0.7)
     .on("mouseover", (event, d) => {
@@ -284,14 +310,14 @@ function drawScene1() {
 
   // 8. Bottom axis (price)
   svg.append("g")
-    .attr("transform", `translate(0,${height * 0.6})`)
+    .attr("transform", `translate(0,${height * 0.55})`)
     .call(d3.axisBottom(x).ticks(8).tickFormat(d3.format("$.2s")));
 
   // X‐axis label
   svg.append("text")
     .attr("class", "axis-label")
     .attr("x", width / 2)
-    .attr("y", height * 0.6 + 35)
+    .attr("y", height * 0.55 + 40)
     .attr("text-anchor", "middle")
     .text("Price (USD)");
 
@@ -327,7 +353,7 @@ function drawScene1() {
     const yPrice = d3.scaleLinear()
       .domain(d3.extent(avgByYear, d => d.avg))
       .nice()
-      .range([height * 0.95, height * 0.7]); // Bottom 25% of chart
+      .range([height * 0.95, height * 0.68]); // Bottom section of chart
 
     // 13. Bottom section axis for year
     svg.append("g")
@@ -351,7 +377,7 @@ function drawScene1() {
     svg.append("text")
       .attr("class", "axis-label")
       .attr("transform", "rotate(-90)")
-      .attr("x", -height * 0.82)
+      .attr("x", -height * 0.81)
       .attr("y", width + 45)
       .attr("text-anchor", "middle")
       .text("Avg Price Trend");
@@ -372,7 +398,7 @@ function drawScene1() {
     svg.append("text")
       .attr("class", "trend-title")
       .attr("x", width / 2)
-      .attr("y", height * 0.68)
+      .attr("y", height * 0.65)
       .attr("text-anchor", "middle")
       .attr("font-size", "12px")
       .attr("font-weight", "bold")
@@ -397,16 +423,17 @@ function drawScene1() {
   // 16. Statistics panel
   const statsPanel = svg.append("g")
     .attr("class", "stats-panel")
-    .attr("transform", `translate(${width - 200}, 10)`);
+    .attr("transform", `translate(${width - 200}, 45)`);
 
   // Background for stats
   statsPanel.append("rect")
     .attr("width", 190)
     .attr("height", 160)
-    .attr("fill", "#f8f9fa")
+    .attr("fill", "rgba(248, 249, 250, 0.95)")
     .attr("stroke", "#dee2e6")
     .attr("stroke-width", 1)
-    .attr("rx", 5);
+    .attr("rx", 8)
+    .style("filter", "drop-shadow(0 2px 8px rgba(0,0,0,0.1))");
 
   // Stats title
   statsPanel.append("text")
@@ -465,34 +492,36 @@ function drawScene1() {
     .attr("x1", x(stats.medianPrice))
     .attr("x2", x(stats.medianPrice))
     .attr("y1", 0)
-    .attr("y2", height * 0.6)
+    .attr("y2", height * 0.55)
     .attr("stroke", "#ff6b35")
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "5,5");
 
   svg.append("text")
     .attr("x", x(stats.medianPrice))
-    .attr("y", -5)
+    .attr("y", 15)
     .attr("text-anchor", "middle")
     .attr("font-size", "10px")
     .attr("fill", "#ff6b35")
+    .attr("font-weight", "bold")
     .text(`Median: \$${Math.round(stats.medianPrice).toLocaleString()}`);
 
   svg.append("line")
     .attr("x1", x(stats.avgPrice))
     .attr("x2", x(stats.avgPrice))
     .attr("y1", 0)
-    .attr("y2", height * 0.6)
+    .attr("y2", height * 0.55)
     .attr("stroke", "#2a9d8f")
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "3,3");
 
   svg.append("text")
     .attr("x", x(stats.avgPrice))
-    .attr("y", -15)
+    .attr("y", 30)
     .attr("text-anchor", "middle")
     .attr("font-size", "10px")
     .attr("fill", "#2a9d8f")
+    .attr("font-weight", "bold")
     .text(`Mean: \$${Math.round(stats.avgPrice).toLocaleString()}`);
 }
 
@@ -718,9 +747,8 @@ function drawScene3() {
         selectedMakes.push(d.make); // Add if not selected
       }
       
-      // Update the select element
-      const makeSelect = d3.select("#makeFilter");
-      makeSelect.selectAll("option").property("selected", function() {
+      // Update the checkboxes
+      d3.selectAll("#makeCheckboxes input").property("checked", function() {
         return selectedMakes.includes(this.value);
       });
       

@@ -1,82 +1,191 @@
 body {
-  font-family: sans-serif;
-  margin: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 30px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.5em;
+  font-weight: 300;
+  color: #2c3e50;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #vis {
-  margin: 0 auto;
-  max-width: 900px;
+  margin: 20px auto;
+  max-width: 1000px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 #filters {
-  background-color: #f8f9fa;
-  padding: 15px;
-  border-radius: 5px;
-  border: 1px solid #dee2e6;
-  margin: 10px auto;
-  max-width: 900px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 25px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 20px auto;
+  max-width: 1000px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
-#filters label {
-  font-weight: bold;
+.filter-section {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.1em;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.checkbox-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fafbfc;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.checkbox-item:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  border-radius: 4px;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
+.checkbox-item label {
+  cursor: pointer;
+  font-size: 0.9em;
   color: #495057;
+  user-select: none;
 }
 
-#filters select {
-  padding: 5px 10px;
-  margin: 0 10px;
-  border: 1px solid #ced4da;
-  border-radius: 3px;
-  background-color: white;
-  vertical-align: top;
-}
-
-#filters select[multiple] {
-  height: auto;
-  min-height: 80px;
-}
-
-#filters select[multiple] option:checked {
-  background-color: #007bff;
-  color: white;
+.filter-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  min-width: 120px;
 }
 
 #filters button {
-  background-color: #dc3545;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 3px;
+  padding: 10px 20px;
+  border-radius: 25px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 #filters button:hover {
-  background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.filter-info {
+  font-size: 0.8em;
+  color: #6c757d;
+  text-align: center;
+  margin-top: 10px;
 }
 
 #controls {
   text-align: center;
-  margin: 10px;
+  margin: 20px 0;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-button {
-  padding: 8px 16px;
-  margin: 0 5px;
-  font-size: 14px;
+#controls button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  margin: 0 10px;
+  font-size: 16px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#controls button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+#controls button:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .tooltip {
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.9);
   color: #fff;
-  padding: 6px;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
   pointer-events: none;
   font-size: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
 }
 
 .scene-title {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 600;
+  fill: #2c3e50;
 }
 
 .annotation-note-title {
@@ -89,7 +198,32 @@ button {
 }
 
 .axis-label {
-  font-size: 12px;
-  font-weight: bold;
-  fill: #333;
+  font-size: 13px;
+  font-weight: 600;
+  fill: #495057;
+}
+
+/* Chart container improvements */
+svg {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+}
+
+/* Custom scrollbar for checkbox containers */
+.checkbox-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.checkbox-container::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.checkbox-container::-webkit-scrollbar-thumb {
+  background: #c1c8cd;
+  border-radius: 3px;
+}
+
+.checkbox-container::-webkit-scrollbar-thumb:hover {
+  background: #a8b2ba;
 }

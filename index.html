@@ -25,19 +25,26 @@
   <div id="vis"></div>
 
   <!-- Filter controls -->
-  <div id="filters" style="text-align: center; margin: 10px 0;">
-    <label for="makeFilter">Filter by Make:</label>
-    <select id="makeFilter" multiple size="4" style="min-width: 150px;">
-    </select>
+  <div id="filters">
+    <div class="filter-section">
+      <h3>Filter by Make</h3>
+      <div id="makeCheckboxes" class="checkbox-container">
+        <!-- Checkboxes will be populated here -->
+      </div>
+    </div>
     
-    <label for="stateFilter" style="margin-left: 20px;">Filter by State:</label>
-    <select id="stateFilter" multiple size="4" style="min-width: 100px;">
-    </select>
+    <div class="filter-section">
+      <h3>Filter by State</h3>
+      <div id="stateCheckboxes" class="checkbox-container">
+        <!-- Checkboxes will be populated here -->
+      </div>
+    </div>
     
-    <button id="clearFilters" style="margin-left: 20px;">Clear Filters</button>
-    
-    <div style="margin-top: 10px; font-size: 12px; color: #666;">
-      Hold Ctrl/Cmd to select multiple options
+    <div class="filter-actions">
+      <button id="clearFilters">Clear All Filters</button>
+      <div class="filter-info">
+        Click checkboxes to filter data
+      </div>
     </div>
   </div>
 
