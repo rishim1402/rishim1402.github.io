@@ -908,42 +908,115 @@ function drawScene3() {
     .attr("font-size", "10px")
     .text("Mileage");
 
-  // 11. Add insights panel
+  // 11. Add insights panel - Enhanced and more prominent
   const insights = calculateInsights(categorizeData);
   const insightsPanel = svg.append("g")
-    .attr("transform", `translate(${width * 0.55}, ${correlationY})`);
+    .attr("transform", `translate(${width * 0.52}, ${correlationY - 15})`);
+
+  // Enhanced background with gradient and shadow effect
+  const defs = svg.append("defs");
+  const gradient = defs.append("linearGradient")
+    .attr("id", "insightsGradient")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "0%")
+    .attr("y2", "100%");
+
+  gradient.append("stop")
+    .attr("offset", "0%")
+    .attr("style", "stop-color:#f8f9fa;stop-opacity:1");
+
+  gradient.append("stop")
+    .attr("offset", "100%")
+    .attr("style", "stop-color:#e9ecef;stop-opacity:1");
+
+  // Main background rectangle with enhanced styling
+  insightsPanel.append("rect")
+    .attr("width", width * 0.45)
+    .attr("height", height - correlationY + 35)
+    .attr("fill", "url(#insightsGradient)")
+    .attr("stroke", "#6c757d")
+    .attr("stroke-width", 2)
+    .attr("rx", 12)
+    .style("filter", "drop-shadow(0 4px 12px rgba(0,0,0,0.15))")
+    .style("opacity", 0.98);
+
+  // Header section with colored background
+  insightsPanel.append("rect")
+    .attr("width", width * 0.45)
+    .attr("height", 35)
+    .attr("fill", "#2c3e50")
+    .attr("rx", 12);
 
   insightsPanel.append("rect")
-    .attr("width", width * 0.4)
-    .attr("height", height - correlationY + 20)
-    .attr("fill", "rgba(248, 249, 250, 0.95)")
-    .attr("stroke", "#dee2e6")
-    .attr("rx", 8);
+    .attr("y", 12)
+    .attr("width", width * 0.45)
+    .attr("height", 23)
+    .attr("fill", "#2c3e50");
 
+  // Enhanced title with icon
   insightsPanel.append("text")
-    .attr("x", width * 0.2)
-    .attr("y", 20)
+    .attr("x", width * 0.225)
+    .attr("y", 25)
     .attr("text-anchor", "middle")
     .attr("font-weight", "bold")
-    .attr("font-size", "12px")
-    .text("Key Insights");
+    .attr("font-size", "16px")
+    .attr("fill", "white")
+    .text("📊 Key Market Insights");
 
+  // Enhanced insight texts with better formatting and colors
   const insightTexts = [
-    `Premium (Toyota/Honda): \$${Math.round(insights.premiumAvg).toLocaleString()}`,
-    `Standard (Ford/Chevy): \$${Math.round(insights.standardAvg).toLocaleString()}`,
-    `Budget (Nissan): \$${Math.round(insights.budgetAvg).toLocaleString()}`,
-    `Depreciation: ~${Math.round(Math.abs(insights.depreciationRate))}% per year`,
-    `Best value: ${insights.bestValueCategory}`,
-    `Most popular color: ${insights.mostPopularColor}`
+    { text: `Premium (Toyota/Honda): \$${Math.round(insights.premiumAvg).toLocaleString()}`, color: "#27ae60", icon: "🏆" },
+    { text: `Standard (Ford/Chevy): \$${Math.round(insights.standardAvg).toLocaleString()}`, color: "#3498db", icon: "🚗" },
+    { text: `Budget (Nissan): \$${Math.round(insights.budgetAvg).toLocaleString()}`, color: "#e74c3c", icon: "💰" },
+    { text: `Depreciation: ~${Math.round(Math.abs(insights.depreciationRate))}% per year`, color: "#f39c12", icon: "📉" },
+    { text: `Best value: ${insights.bestValueCategory}`, color: "#9b59b6", icon: "⭐" },
+    { text: `Most popular color: ${insights.mostPopularColor}`, color: "#34495e", icon: "🎨" }
   ];
 
+  // Add background bars for each insight
+  insightsPanel.selectAll(".insight-bg")
+    .data(insightTexts)
+    .enter().append("rect")
+    .attr("class", "insight-bg")
+    .attr("x", 8)
+    .attr("y", (d, i) => 45 + i * 22)
+    .attr("width", width * 0.45 - 16)
+    .attr("height", 20)
+    .attr("fill", (d, i) => i % 2 === 0 ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.05)")
+    .attr("rx", 4);
+
+  // Add icons
+  insightsPanel.selectAll(".insight-icon")
+    .data(insightTexts)
+    .enter().append("text")
+    .attr("class", "insight-icon")
+    .attr("x", 18)
+    .attr("y", (d, i) => 60 + i * 22)
+    .attr("font-size", "14px")
+    .text(d => d.icon);
+
+  // Add colored text
   insightsPanel.selectAll(".insight-text")
     .data(insightTexts)
     .enter().append("text")
-    .attr("x", 10)
-    .attr("y", (d, i) => 40 + i * 15)
-    .attr("font-size", "10px")
-    .text(d => d);
+    .attr("class", "insight-text")
+    .attr("x", 40)
+    .attr("y", (d, i) => 60 + i * 22)
+    .attr("font-size", "12px")
+    .attr("font-weight", "600")
+    .attr("fill", d => d.color)
+    .text(d => d.text);
+
+  // Add a subtle border highlight
+  insightsPanel.append("rect")
+    .attr("width", width * 0.45)
+    .attr("height", height - correlationY + 35)
+    .attr("fill", "none")
+    .attr("stroke", "#3498db")
+    .attr("stroke-width", 1)
+    .attr("rx", 12)
+    .style("opacity", 0.5);
 
   // 12. Scene title
   let titleText = "Brand Analysis: Toyota/Honda vs Ford/Chevrolet vs Nissan";
