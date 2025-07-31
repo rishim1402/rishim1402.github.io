@@ -1,21 +1,33 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  padding: 20px;
+  padding: 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   color: #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-container {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  padding: 20px;
+  min-height: calc(100vh - 40px);
 }
 
 header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.95);
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 20px;
+  margin-bottom: 0;
 }
 
 header h1 {
@@ -26,15 +38,21 @@ header h1 {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 #vis {
-  margin: 20px auto;
-  max-width: 1000px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
   padding: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  flex: 1;
 }
 
 #filters {
@@ -42,19 +60,19 @@ header h1 {
   padding: 25px;
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  margin: 20px auto;
-  max-width: 1000px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
+  width: 280px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
   display: flex;
-  gap: 30px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .filter-section {
-  flex: 1;
-  min-width: 200px;
+  margin-bottom: 20px;
 }
 
 .filter-section h3 {
@@ -107,8 +125,8 @@ header h1 {
   flex-direction: column;
   gap: 10px;
   justify-content: center;
-  align-items: center;
-  min-width: 120px;
+  align-items: stretch;
+  margin-top: 10px;
 }
 
 #filters button {
@@ -137,16 +155,12 @@ header h1 {
 
 #controls {
   text-align: center;
-  margin: 20px 0;
   background: rgba(255, 255, 255, 0.95);
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  max-width: 1000px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 #controls button {
@@ -230,4 +244,44 @@ svg {
 
 .checkbox-container::-webkit-scrollbar-thumb:hover {
   background: #a8b2ba;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  #filters {
+    width: 100%;
+    position: static;
+    order: 2;
+  }
+  
+  .content-area {
+    order: 1;
+  }
+  
+  header {
+    margin: 10px;
+  }
+  
+  header h1 {
+    font-size: 2em;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.5em;
+  }
+  
+  #filters {
+    padding: 15px;
+  }
+  
+  #vis {
+    padding: 15px;
+  }
 }

@@ -21,37 +21,42 @@
     <h1>Used Car Market: Price, Mileage & Make</h1>
   </header>
 
-  <!-- Visualization container -->
-  <div id="vis"></div>
+  <div class="main-container">
+    <!-- Left sidebar for filters -->
+    <div id="filters">
+      <div class="filter-section">
+        <h3>Filter by Make</h3>
+        <div id="makeCheckboxes" class="checkbox-container">
+          <!-- Checkboxes will be populated here -->
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h3>Filter by State</h3>
+        <div id="stateCheckboxes" class="checkbox-container">
+          <!-- Checkboxes will be populated here -->
+        </div>
+      </div>
+      
+      <div class="filter-actions">
+        <button id="clearFilters">Clear All Filters</button>
+        <div class="filter-info">
+          Click checkboxes to filter data
+        </div>
+      </div>
+    </div>
 
-  <!-- Filter controls -->
-  <div id="filters">
-    <div class="filter-section">
-      <h3>Filter by Make</h3>
-      <div id="makeCheckboxes" class="checkbox-container">
-        <!-- Checkboxes will be populated here -->
-      </div>
-    </div>
-    
-    <div class="filter-section">
-      <h3>Filter by State</h3>
-      <div id="stateCheckboxes" class="checkbox-container">
-        <!-- Checkboxes will be populated here -->
-      </div>
-    </div>
-    
-    <div class="filter-actions">
-      <button id="clearFilters">Clear All Filters</button>
-      <div class="filter-info">
-        Click checkboxes to filter data
-      </div>
-    </div>
-  </div>
+    <!-- Main content area -->
+    <div class="content-area">
+      <!-- Visualization container -->
+      <div id="vis"></div>
 
-  <!-- Navigation controls -->
-  <div id="controls">
-    <button id="prevBtn">Previous</button>
-    <button id="nextBtn">Next</button>
+      <!-- Navigation controls -->
+      <div id="controls">
+        <button id="prevBtn">Previous</button>
+        <button id="nextBtn">Next</button>
+      </div>
+    </div>
   </div>
 
   <!-- Tooltip container -->
