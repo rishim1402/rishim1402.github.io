@@ -710,20 +710,23 @@ function drawScene3() {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // 3. Categorize makes into luxury, mainstream, and economy
-  const luxuryMakes = ['BMW', 'Mercedes-Benz', 'Audi', 'Lexus', 'Cadillac', 'Infiniti', 'Acura', 'Volvo'];
-  const economyMakes = ['Hyundai', 'Kia', 'Nissan', 'Mitsubishi', 'Suzuki', 'Scion'];
+  // 3. Categorize makes into luxury, mainstream, and economy based on actual data
+  // Toyota & Honda are generally reliable mainstream brands
+  // Chevrolet & Ford are American mainstream brands  
+  // Nissan is also mainstream but can be positioned as more budget-friendly
+  const premiumMakes = ['Toyota', 'Honda']; // Most reliable/premium in this dataset
+  const budgetMakes = ['Nissan']; // More budget-friendly option
   
   const categorizeData = data.map(d => ({
     ...d,
-    makeCategory: luxuryMakes.includes(d.make) ? 'Luxury' : 
-                  economyMakes.includes(d.make) ? 'Economy' : 'Mainstream',
-    ageGroup: d.year >= 2015 ? 'New (2015+)' :
-              d.year >= 2010 ? 'Recent (2010-2014)' :
-              d.year >= 2005 ? 'Older (2005-2009)' : 'Classic (<2005)',
-    mileageGroup: d.mileage < 30000 ? 'Low (<30k)' :
-                  d.mileage < 80000 ? 'Medium (30k-80k)' :
-                  d.mileage < 150000 ? 'High (80k-150k)' : 'Very High (150k+)'
+    makeCategory: premiumMakes.includes(d.make) ? 'Premium' : 
+                  budgetMakes.includes(d.make) ? 'Budget' : 'Standard',
+    ageGroup: d.year >= 2017 ? 'Newest (2017-2018)' :
+              d.year >= 2015 ? 'Recent (2015-2016)' :
+              d.year >= 2013 ? 'Mid-Age (2013-2014)' : 'Older (2010-2012)',
+    mileageGroup: d.mileage < 25000 ? 'Low (<25k)' :
+                  d.mileage < 50000 ? 'Medium (25k-50k)' :
+                  d.mileage < 75000 ? 'High (50k-75k)' : 'Very High (75k+)'
   }));
 
   // 4. Create a multi-faceted analysis
@@ -749,8 +752,8 @@ function drawScene3() {
   });
 
   // 5. Create scales
-  const makeCategories = ['Economy', 'Mainstream', 'Luxury'];
-  const ageGroups = ['Classic (<2005)', 'Older (2005-2009)', 'Recent (2010-2014)', 'New (2015+)'];
+  const makeCategories = ['Budget', 'Standard', 'Premium'];
+  const ageGroups = ['Older (2010-2012)', 'Mid-Age (2013-2014)', 'Recent (2015-2016)', 'Newest (2017-2018)'];
   
   const x = d3.scaleBand()
     .domain(makeCategories)
@@ -769,7 +772,7 @@ function drawScene3() {
 
   const colorScale = d3.scaleOrdinal()
     .domain(ageGroups)
-    .range(['#e74c3c', '#f39c12', '#f1c40f', '#27ae60']);
+    .range(['#e74c3c', '#f39c12', '#3498db', '#27ae60']); // Red, Orange, Blue, Green
 
   // 6. Draw grouped bars for average price by category and age
   const bars = svg.selectAll(".bar-group")
@@ -926,11 +929,12 @@ function drawScene3() {
     .text("Key Insights");
 
   const insightTexts = [
-    `Luxury cars avg: \$${Math.round(insights.luxuryAvg).toLocaleString()}`,
-    `Economy cars avg: \$${Math.round(insights.economyAvg).toLocaleString()}`,
-    `Price drops ${Math.round(insights.depreciationRate)}% per year`,
+    `Premium (Toyota/Honda): \$${Math.round(insights.premiumAvg).toLocaleString()}`,
+    `Standard (Ford/Chevy): \$${Math.round(insights.standardAvg).toLocaleString()}`,
+    `Budget (Nissan): \$${Math.round(insights.budgetAvg).toLocaleString()}`,
+    `Depreciation: ~${Math.round(Math.abs(insights.depreciationRate))}% per year`,
     `Best value: ${insights.bestValueCategory}`,
-    `Highest depreciation: ${insights.highestDepreciation}`
+    `Most popular color: ${insights.mostPopularColor}`
   ];
 
   insightsPanel.selectAll(".insight-text")
@@ -942,7 +946,7 @@ function drawScene3() {
     .text(d => d);
 
   // 12. Scene title
-  let titleText = "Factor Analysis: How Category, Age & Mileage Affect Price";
+  let titleText = "Brand Analysis: Toyota/Honda vs Ford/Chevrolet vs Nissan";
   if (selectedMakes.length > 0 || selectedStates.length > 0) {
     titleText += " (Filtered Data)";
   }
@@ -976,36 +980,44 @@ function calculateLinearRegression(data) {
 }
 
 function calculateInsights(data) {
-  const luxuryCars = data.filter(d => d.makeCategory === 'Luxury');
-  const economyCars = data.filter(d => d.makeCategory === 'Economy');
-  const mainstreamCars = data.filter(d => d.makeCategory === 'Mainstream');
+  const premiumCars = data.filter(d => d.makeCategory === 'Premium');
+  const budgetCars = data.filter(d => d.makeCategory === 'Budget');
+  const standardCars = data.filter(d => d.makeCategory === 'Standard');
 
-  const luxuryAvg = d3.mean(luxuryCars, d => d.price) || 0;
-  const economyAvg = d3.mean(economyCars, d => d.price) || 0;
-  const mainstreamAvg = d3.mean(mainstreamCars, d => d.price) || 0;
+  const premiumAvg = d3.mean(premiumCars, d => d.price) || 0;
+  const budgetAvg = d3.mean(budgetCars, d => d.price) || 0;
+  const standardAvg = d3.mean(standardCars, d => d.price) || 0;
 
-  // Calculate depreciation rate (rough estimate)
-  const newCars = data.filter(d => d.ageGroup === 'New (2015+)');
-  const oldCars = data.filter(d => d.ageGroup === 'Classic (<2005)');
-  const newAvg = d3.mean(newCars, d => d.price) || 0;
-  const oldAvg = d3.mean(oldCars, d => d.price) || 0;
-  const depreciationRate = ((newAvg - oldAvg) / newAvg * 100) / 10; // Per year roughly
+  // Calculate depreciation rate for 2010-2018 range
+  const newestCars = data.filter(d => d.ageGroup === 'Newest (2017-2018)');
+  const oldestCars = data.filter(d => d.ageGroup === 'Older (2010-2012)');
+  const newestAvg = d3.mean(newestCars, d => d.price) || 0;
+  const oldestAvg = d3.mean(oldestCars, d => d.price) || 0;
+  const depreciationRate = newestAvg > 0 ? ((newestAvg - oldestAvg) / newestAvg * 100) / 8 : 0; // Over 8 years
 
-  // Best value category (highest price per dollar)
+  // Best value category (lowest average price for the value)
   const categories = [
-    { name: 'Economy', avg: economyAvg },
-    { name: 'Mainstream', avg: mainstreamAvg },
-    { name: 'Luxury', avg: luxuryAvg }
-  ];
-  const bestValueCategory = categories.sort((a, b) => a.avg - b.avg)[0].name;
+    { name: 'Budget', avg: budgetAvg },
+    { name: 'Standard', avg: standardAvg },
+    { name: 'Premium', avg: premiumAvg }
+  ].filter(c => c.avg > 0);
+
+  const bestValueCategory = categories.length > 0 ? 
+    categories.sort((a, b) => a.avg - b.avg)[0].name : 'N/A';
+
+  // Most popular color and state (if we want to add these insights)
+  const colorCounts = d3.rollup(data, v => v.length, d => d.color);
+  const mostPopularColor = colorCounts.size > 0 ? 
+    Array.from(colorCounts.entries()).sort((a, b) => b[1] - a[1])[0][0] : 'N/A';
 
   return {
-    luxuryAvg,
-    economyAvg,
-    mainstreamAvg,
+    premiumAvg,
+    budgetAvg,
+    standardAvg,
     depreciationRate,
     bestValueCategory,
-    highestDepreciation: 'Luxury brands'
+    highestDepreciation: premiumAvg > standardAvg ? 'Premium brands' : 'Similar across brands',
+    mostPopularColor
   };
 }
 
