@@ -821,31 +821,39 @@ function drawScene3() {
     .attr("text-anchor", "middle")
     .text("Average Price (USD)");
 
-  // 9. Add legend for age groups
+  // 9. Add legend for age groups - positioned well below the chart to avoid overlap
   const legend = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(${width - 150}, 20)`);
+    .attr("transform", `translate(20, ${height * 0.76})`);
+
+  // Add legend title
+  legend.append("text")
+    .attr("x", 0)
+    .attr("y", -5)
+    .attr("font-size", "12px")
+    .attr("font-weight", "bold")
+    .text("Age Groups:");
 
   const legendItems = legend.selectAll(".legend-item")
     .data(ageGroups)
     .enter().append("g")
     .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+    .attr("transform", (d, i) => `translate(${i * 140}, 10)`); // Horizontal layout
 
   legendItems.append("rect")
-    .attr("width", 15)
-    .attr("height", 15)
+    .attr("width", 12)
+    .attr("height", 12)
     .attr("fill", d => colorScale(d))
     .attr("opacity", 0.8);
 
   legendItems.append("text")
-    .attr("x", 20)
-    .attr("y", 12)
-    .attr("font-size", "11px")
+    .attr("x", 16)
+    .attr("y", 10)
+    .attr("font-size", "10px")
     .text(d => d);
 
   // 10. Add correlation analysis in bottom section
-  const correlationY = height * 0.8;
+  const correlationY = height * 0.82;
 
   // Mileage vs Price correlation
   const mileageExtent = d3.extent(data, d => d.mileage);
@@ -928,7 +936,7 @@ function drawScene3() {
   // 11. Add insights panel - Enhanced and positioned to avoid overlap
   const insights = calculateInsights(categorizeData);
   const insightsPanel = svg.append("g")
-    .attr("transform", `translate(${width * 0.42}, ${correlationY - 15})`);
+    .attr("transform", `translate(${width * 0.42}, ${correlationY - 10})`);
 
   // Enhanced background with gradient and shadow effect
   const defs = svg.append("defs");
@@ -974,7 +982,7 @@ function drawScene3() {
   // Enhanced title without emoji
   insightsPanel.append("text")
     .attr("x", width * 0.275)
-    .attr("y", 25)
+    .attr("y", 40)
     .attr("text-anchor", "middle")
     .attr("font-weight", "bold")
     .attr("font-size", "16px")
