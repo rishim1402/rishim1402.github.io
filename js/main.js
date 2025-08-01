@@ -22,24 +22,24 @@ function populateFilters() {
   const makes = Array.from(new Set(carData.map(d => d.make))).sort();
   const makeContainer = d3.select("#makeCheckboxes");
   makeContainer.selectAll("*").remove();
-  
+
   const makeItems = makeContainer.selectAll(".checkbox-item")
     .data(makes)
     .enter()
     .append("div")
     .attr("class", "checkbox-item")
-    .on("click", function(event, d) {
+    .on("click", function (event, d) {
       const checkbox = d3.select(this).select("input");
       const isChecked = !checkbox.property("checked");
       checkbox.property("checked", isChecked);
       updateMakeFilters();
     });
-  
+
   makeItems.append("input")
     .attr("type", "checkbox")
     .attr("id", d => `make-${d}`)
     .attr("value", d => d);
-  
+
   makeItems.append("label")
     .attr("for", d => `make-${d}`)
     .text(d => d);
@@ -48,30 +48,30 @@ function populateFilters() {
   const states = Array.from(new Set(carData.map(d => d.state))).sort();
   const stateContainer = d3.select("#stateCheckboxes");
   stateContainer.selectAll("*").remove();
-  
+
   const stateItems = stateContainer.selectAll(".checkbox-item")
     .data(states)
     .enter()
     .append("div")
     .attr("class", "checkbox-item")
-    .on("click", function(event, d) {
+    .on("click", function (event, d) {
       const checkbox = d3.select(this).select("input");
       const isChecked = !checkbox.property("checked");
       checkbox.property("checked", isChecked);
       updateStateFilters();
     });
-  
+
   stateItems.append("input")
     .attr("type", "checkbox")
     .attr("id", d => `state-${d}`)
     .attr("value", d => d);
-  
+
   stateItems.append("label")
     .attr("for", d => `state-${d}`)
     .text(d => d);
 
   // Clear filters button
-  d3.select("#clearFilters").on("click", function() {
+  d3.select("#clearFilters").on("click", function () {
     selectedMakes = [];
     selectedStates = [];
     d3.selectAll("#makeCheckboxes input").property("checked", false);
@@ -82,7 +82,7 @@ function populateFilters() {
 
 function updateMakeFilters() {
   selectedMakes = [];
-  d3.selectAll("#makeCheckboxes input:checked").each(function() {
+  d3.selectAll("#makeCheckboxes input:checked").each(function () {
     selectedMakes.push(this.value);
   });
   renderSlide(currentSlide);
@@ -90,7 +90,7 @@ function updateMakeFilters() {
 
 function updateStateFilters() {
   selectedStates = [];
-  d3.selectAll("#stateCheckboxes input:checked").each(function() {
+  d3.selectAll("#stateCheckboxes input:checked").each(function () {
     selectedStates.push(this.value);
   });
   renderSlide(currentSlide);
@@ -716,25 +716,25 @@ function drawScene3() {
   // Nissan is also mainstream but can be positioned as more budget-friendly
   const premiumMakes = ['Toyota', 'Honda']; // Most reliable/premium in this dataset
   const budgetMakes = ['Nissan']; // More budget-friendly option
-  
+
   const categorizeData = data.map(d => ({
     ...d,
-    makeCategory: premiumMakes.includes(d.make) ? 'Premium' : 
-                  budgetMakes.includes(d.make) ? 'Budget' : 'Standard',
+    makeCategory: premiumMakes.includes(d.make) ? 'Premium' :
+      budgetMakes.includes(d.make) ? 'Budget' : 'Standard',
     ageGroup: d.year >= 2017 ? 'Newest (2017-2018)' :
-              d.year >= 2015 ? 'Recent (2015-2016)' :
-              d.year >= 2013 ? 'Mid-Age (2013-2014)' : 'Older (2010-2012)',
+      d.year >= 2015 ? 'Recent (2015-2016)' :
+        d.year >= 2013 ? 'Mid-Age (2013-2014)' : 'Older (2010-2012)',
     mileageGroup: d.mileage < 25000 ? 'Low (<25k)' :
-                  d.mileage < 50000 ? 'Medium (25k-50k)' :
-                  d.mileage < 75000 ? 'High (50k-75k)' : 'Very High (75k+)'
+      d.mileage < 50000 ? 'Medium (25k-50k)' :
+        d.mileage < 75000 ? 'High (50k-75k)' : 'Very High (75k+)'
   }));
 
   // 4. Create a multi-faceted analysis
   const analysisData = [];
-  
+
   // Group by make category and age group
   const grouped = d3.group(categorizeData, d => d.makeCategory, d => d.ageGroup);
-  
+
   grouped.forEach((ageGroups, makeCategory) => {
     ageGroups.forEach((cars, ageGroup) => {
       if (cars.length > 0) {
@@ -754,7 +754,7 @@ function drawScene3() {
   // 5. Create scales
   const makeCategories = ['Budget', 'Standard', 'Premium'];
   const ageGroups = ['Older (2010-2012)', 'Mid-Age (2013-2014)', 'Recent (2015-2016)', 'Newest (2017-2018)'];
-  
+
   const x = d3.scaleBand()
     .domain(makeCategories)
     .range([0, width])
@@ -846,15 +846,15 @@ function drawScene3() {
 
   // 10. Add correlation analysis in bottom section
   const correlationY = height * 0.8;
-  
+
   // Mileage vs Price correlation
   const mileageExtent = d3.extent(data, d => d.mileage);
   const priceExtent = d3.extent(data, d => d.price);
-  
+
   const xCorr = d3.scaleLinear()
     .domain(mileageExtent)
     .range([0, width * 0.35]);
-  
+
   const yCorr = d3.scaleLinear()
     .domain(priceExtent)
     .range([height, correlationY]);
@@ -904,7 +904,7 @@ function drawScene3() {
   // Add axis labels for correlation plot
   svg.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xCorr).ticks(4).tickFormat(d => `${Math.round(d/1000)}k`));
+    .call(d3.axisBottom(xCorr).ticks(4).tickFormat(d => `${Math.round(d / 1000)}k`));
 
   svg.append("g")
     .attr("transform", `translate(0,${correlationY})`)
@@ -1050,7 +1050,7 @@ function calculateLinearRegression(data) {
 
   const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
   const intercept = (sumY - slope * sumX) / n;
-  
+
   const yMean = sumY / n;
   const ssRes = d3.sum(data, d => Math.pow(d[1] - (slope * d[0] + intercept), 2));
   const ssTot = d3.sum(data, d => Math.pow(d[1] - yMean, 2));
@@ -1082,12 +1082,12 @@ function calculateInsights(data) {
     { name: 'Premium', avg: premiumAvg }
   ].filter(c => c.avg > 0);
 
-  const bestValueCategory = categories.length > 0 ? 
+  const bestValueCategory = categories.length > 0 ?
     categories.sort((a, b) => a.avg - b.avg)[0].name : 'N/A';
 
   // Most popular color and state (if we want to add these insights)
   const colorCounts = d3.rollup(data, v => v.length, d => d.color);
-  const mostPopularColor = colorCounts.size > 0 ? 
+  const mostPopularColor = colorCounts.size > 0 ?
     Array.from(colorCounts.entries()).sort((a, b) => b[1] - a[1])[0][0] : 'N/A';
 
   return {
