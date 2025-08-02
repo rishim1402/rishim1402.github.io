@@ -640,26 +640,34 @@ function drawScene2() {
     .attr("text-anchor", "middle")
     .text(titleText);
 
-  // 11. Add legend for states (if multiple states visible)
+  // 11. Add legend for states (if multiple states visible) - positioned in right margin
   if (states.length > 1 && states.length <= 10) {
     const legend = svg.append("g")
       .attr("class", "legend")
-      .attr("transform", `translate(${width - 100}, 20)`);
+      .attr("transform", `translate(${width + 20}, 50)`);
+
+    // Add legend title
+    legend.append("text")
+      .attr("x", 0)
+      .attr("y", -10)
+      .attr("font-size", "12px")
+      .attr("font-weight", "bold")
+      .text("States:");
 
     const legendItems = legend.selectAll(".legend-item")
       .data(states)
       .enter().append("g")
       .attr("class", "legend-item")
-      .attr("transform", (d, i) => `translate(0, ${i * 15})`);
+      .attr("transform", (d, i) => `translate(0, ${i * 18})`);
 
     legendItems.append("circle")
-      .attr("r", 4)
+      .attr("r", 5)
       .attr("fill", d => color(d));
 
     legendItems.append("text")
-      .attr("x", 10)
+      .attr("x", 12)
       .attr("y", 4)
-      .attr("font-size", "10px")
+      .attr("font-size", "11px")
       .text(d => d);
   }
 
