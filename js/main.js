@@ -6,7 +6,7 @@ const slides = [drawScene1, drawScene2, drawScene3];
 
 // DIMENSIONS
 const margin = { top: 60, right: 80, bottom: 80, left: 80 };
-const width = 1200 - margin.left - margin.right;
+const width = 1400 - margin.left - margin.right;
 const height = 800 - margin.top - margin.bottom;
 
 // Load data and kick off
