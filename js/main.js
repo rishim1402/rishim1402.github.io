@@ -978,7 +978,7 @@ function drawScene3() {
 
   // Calculate proper panel dimensions
   const panelWidth = width * 0.58;
-  const panelHeight = height - correlationY - 5; // Leave some margin at bottom
+  const panelHeight = height - correlationY; // Leave some margin at bottom
 
   // Enhanced background with gradient and shadow effect
   const defs = svg.append("defs");
