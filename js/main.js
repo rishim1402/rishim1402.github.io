@@ -497,6 +497,16 @@ function drawScene1() {
     .attr("font-size", "16px")
     .text(titleText);
 
+  // Add scene description
+  svg.append("text")
+    .attr("class", "scene-description")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2 + 25)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .attr("fill", "#666")
+    .text("Explore the overall price distribution with statistical insights and pricing trends over time");
+
   // 18. Add median and mean indicators on histogram
   svg.append("line")
     .attr("x1", x(stats.medianPrice))
@@ -639,6 +649,38 @@ function drawScene2() {
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
     .text(titleText);
+
+  // Add scene description
+  svg.append("text")
+    .attr("class", "scene-description")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2 + 20)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .attr("fill", "#666")
+    .text("Analyze the relationship between price and mileage. Use the brush tool to select and examine specific cars.");
+
+  // Add instruction for selecting area
+  svg.append("text")
+    .attr("class", "scene-instruction")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2 + 35)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "11px")
+    .attr("fill", "#e74c3c")
+    .attr("font-style", "italic")
+    .text("Click and drag to select an area in the scatterplot to filter cars by price and mileage range.");
+
+  // Add specific instruction for brush selection
+  svg.append("text")
+    .attr("class", "scene-instruction")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2 + 35)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "11px")
+    .attr("fill", "#e74c3c")
+    .attr("font-weight", "bold")
+    .text("Click and drag to select an area in the scatterplot to filter cars");
 
   // 11. Add legend for states (if multiple states visible) - positioned in right margin
   if (states.length > 1 && states.length <= 10) {
@@ -1101,6 +1143,16 @@ function drawScene3() {
     .attr("y", -margin.top / 2)
     .attr("text-anchor", "middle")
     .text(titleText);
+
+  // Add scene description
+  svg.append("text")
+    .attr("class", "scene-description")
+    .attr("x", width / 2)
+    .attr("y", -margin.top / 2 + 20)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .attr("fill", "#666")
+    .text("Compare brand categories by age groups, analyze price-mileage correlation, and discover key market insights.");
 }
 
 // Helper functions
