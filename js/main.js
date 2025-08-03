@@ -5,7 +5,7 @@ let selectedStates = [];
 const slides = [drawScene1, drawScene2, drawScene3];
 
 // DIMENSIONS
-const margin = { top: 60, right: 80, bottom: 80, left: 80 };
+const margin = { top: 60, right: 120, bottom: 80, left: 80 };
 const width = 1400 - margin.left - margin.right;
 const height = 800 - margin.top - margin.bottom;
 
@@ -829,7 +829,7 @@ function drawScene3() {
     .attr("text-anchor", "middle")
     .text("Average Price (USD)");
 
-  // 9. Add legend for age groups - positioned on the right side
+  // 9. Add legend for age groups - positioned on the right side with wrapped text
   const legend = svg.append("g")
     .attr("class", "legend")
     .attr("transform", `translate(${width + 20}, 50)`);
@@ -842,11 +842,19 @@ function drawScene3() {
     .attr("font-weight", "bold")
     .text("Age Groups:");
 
+  // Create shorter labels for better fit
+  const ageGroupLabels = {
+    'Older (2010-2012)': '2010-2012',
+    'Mid-Age (2013-2014)': '2013-2014', 
+    'Recent (2015-2016)': '2015-2016',
+    'Newest (2017-2018)': '2017-2018'
+  };
+
   const legendItems = legend.selectAll(".legend-item")
     .data(ageGroups)
     .enter().append("g")
     .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Vertical layout
+    .attr("transform", (d, i) => `translate(0, ${i * 25})`); // Increased spacing for multi-line
 
   legendItems.append("rect")
     .attr("width", 14)
@@ -854,11 +862,27 @@ function drawScene3() {
     .attr("fill", d => colorScale(d))
     .attr("opacity", 0.8);
 
+  // Add main year range text
   legendItems.append("text")
     .attr("x", 18)
     .attr("y", 11)
     .attr("font-size", "11px")
-    .text(d => d);
+    .attr("font-weight", "bold")
+    .text(d => ageGroupLabels[d]);
+
+  // Add descriptive text on second line
+  legendItems.append("text")
+    .attr("x", 18)
+    .attr("y", 22)
+    .attr("font-size", "9px")
+    .attr("fill", "#666")
+    .text(d => {
+      if (d.includes('Oldest')) return 'Oldest';
+      if (d.includes('Mid-Age')) return 'Mid-Age';
+      if (d.includes('Recent')) return 'Recent';
+      if (d.includes('Newest')) return 'Newest';
+      return '';
+    });
 
   // 10. Add correlation analysis in bottom section
   const correlationY = height * 0.82;
