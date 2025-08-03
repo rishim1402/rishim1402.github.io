@@ -668,19 +668,8 @@ function drawScene2() {
     .attr("text-anchor", "middle")
     .attr("font-size", "11px")
     .attr("fill", "#e74c3c")
-    .attr("font-style", "italic")
-    .text("Click and drag to select an area in the scatterplot to filter cars by price and mileage range.");
-
-  // Add specific instruction for brush selection
-  svg.append("text")
-    .attr("class", "scene-instruction")
-    .attr("x", width / 2)
-    .attr("y", -margin.top / 2 + 35)
-    .attr("text-anchor", "middle")
-    .attr("font-size", "11px")
-    .attr("fill", "#e74c3c")
     .attr("font-weight", "bold")
-    .text("Click and drag to select an area in the scatterplot to filter cars");
+    .text("Click and drag to select an area in the scatterplot to filter cars by price and mileage range.");
 
   // 11. Add legend for states (if multiple states visible) - positioned in right margin
   if (states.length > 1 && states.length <= 10) {
