@@ -690,17 +690,23 @@ function drawScene2() {
     ).attr("opacity", d =>
       selected.includes(d) ? 1.0 : 0.2
     );
-    // list them below
+    // list them below (sorted by price descending, then by make)
     const listContainer = d3.select("#selectionList").html("");
     if (selected.length === 0) {
       listContainer.html("<p>No cars in selected area.</p>");
     } else {
-      listContainer.append("h4").text(`Selected Cars (${selected.length})`);
+      // Sort selected cars by price (highest first), then by make alphabetically
+      const sortedSelected = selected.sort((a, b) => {
+        if (b.price !== a.price) return b.price - a.price; // Price descending
+        return a.make.localeCompare(b.make); // Make alphabetical
+      });
+      
+      listContainer.append("h4").text(`Selected Cars (${selected.length}) - Sorted by Price`);
       const list = listContainer
         .selectAll("p")
-        .data(selected, d => `${d.make}-${d.model}-${d.mileage}`);
+        .data(sortedSelected, d => `${d.make}-${d.model}-${d.mileage}`);
       list.enter().append("p")
-        .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price} — ${d.state} — ${d.mileage} mi — Year: ${d.year}`)
+        .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price.toLocaleString()} — ${d.state} — ${d.mileage.toLocaleString()} mi — Year: ${d.year}`)
         .style("color", d => color(d.state))
         .style("margin", "2px 0");
     }
@@ -972,7 +978,7 @@ function drawScene3() {
 
   // Calculate proper panel dimensions
   const panelWidth = width * 0.58;
-  const panelHeight = height - correlationY - 15; // Leave some margin at bottom
+  const panelHeight = height - correlationY - 5; // Leave some margin at bottom
 
   // Enhanced background with gradient and shadow effect
   const defs = svg.append("defs");
