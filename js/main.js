@@ -965,10 +965,14 @@ function drawScene3() {
     .attr("font-size", "10px")
     .text("Price");
 
-  // 11. Add insights panel - Enhanced and positioned to avoid overlap
+  // 11. Add insights panel - Fixed positioning and sizing
   const insights = calculateInsights(categorizeData);
   const insightsPanel = svg.append("g")
-    .attr("transform", `translate(${width * 0.42}, ${correlationY - 10})`);
+    .attr("transform", `translate(${width * 0.4}, ${correlationY + 5})`);
+
+  // Calculate proper panel dimensions
+  const panelWidth = width * 0.58;
+  const panelHeight = height - correlationY - 15; // Leave some margin at bottom
 
   // Enhanced background with gradient and shadow effect
   const defs = svg.append("defs");
@@ -987,10 +991,10 @@ function drawScene3() {
     .attr("offset", "100%")
     .attr("style", "stop-color:#e9ecef;stop-opacity:1");
 
-  // Main background rectangle with enhanced styling
+  // Main background rectangle with proper sizing
   insightsPanel.append("rect")
-    .attr("width", width * 0.55)
-    .attr("height", height - correlationY + 35)
+    .attr("width", panelWidth)
+    .attr("height", panelHeight)
     .attr("fill", "url(#insightsGradient)")
     .attr("stroke", "#6c757d")
     .attr("stroke-width", 2)
@@ -1000,24 +1004,24 @@ function drawScene3() {
 
   // Header section with colored background
   insightsPanel.append("rect")
-    .attr("width", width * 0.55)
-    .attr("height", 35)
+    .attr("width", panelWidth)
+    .attr("height", 30)
     .attr("fill", "#2c3e50")
     .attr("rx", 12);
 
   insightsPanel.append("rect")
-    .attr("y", 12)
-    .attr("width", width * 0.55)
-    .attr("height", 23)
+    .attr("y", 10)
+    .attr("width", panelWidth)
+    .attr("height", 20)
     .attr("fill", "#2c3e50");
 
-  // Enhanced title without emoji
+  // Fixed title positioning
   insightsPanel.append("text")
-    .attr("x", width * 0.275)
-    .attr("y", 40)
+    .attr("x", panelWidth / 2)
+    .attr("y", 22)
     .attr("text-anchor", "middle")
     .attr("font-weight", "bold")
-    .attr("font-size", "16px")
+    .attr("font-size", "14px")
     .attr("fill", "white")
     .text("Key Market Insights");
 
@@ -1031,34 +1035,34 @@ function drawScene3() {
     { text: `• Most popular color: ${insights.mostPopularColor}`, color: "#34495e" }
   ];
 
-  // Add background bars for each insight
+  // Add background bars for each insight with proper spacing
   insightsPanel.selectAll(".insight-bg")
     .data(insightTexts)
     .enter().append("rect")
     .attr("class", "insight-bg")
     .attr("x", 8)
-    .attr("y", (d, i) => 45 + i * 22)
-    .attr("width", width * 0.55 - 16)
-    .attr("height", 20)
+    .attr("y", (d, i) => 35 + i * 18)
+    .attr("width", panelWidth - 16)
+    .attr("height", 16)
     .attr("fill", (d, i) => i % 2 === 0 ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.05)")
     .attr("rx", 4);
 
-  // Add colored text with bullet points
+  // Add colored text with bullet points - properly positioned
   insightsPanel.selectAll(".insight-text")
     .data(insightTexts)
     .enter().append("text")
     .attr("class", "insight-text")
-    .attr("x", 20)
-    .attr("y", (d, i) => 60 + i * 22)
-    .attr("font-size", "12px")
+    .attr("x", 15)
+    .attr("y", (d, i) => 46 + i * 18)
+    .attr("font-size", "11px")
     .attr("font-weight", "600")
     .attr("fill", d => d.color)
     .text(d => d.text);
 
-  // Add a subtle border highlight
+  // Add a subtle border highlight with proper dimensions
   insightsPanel.append("rect")
-    .attr("width", width * 0.55)
-    .attr("height", height - correlationY + 35)
+    .attr("width", panelWidth)
+    .attr("height", panelHeight)
     .attr("fill", "none")
     .attr("stroke", "#3498db")
     .attr("stroke-width", 1)
