@@ -695,18 +695,32 @@ function drawScene2() {
     if (selected.length === 0) {
       listContainer.html("<p>No cars in selected area.</p>");
     } else {
-      // Sort selected cars by price (highest first), then by make alphabetically
-      const sortedSelected = selected.sort((a, b) => {
+      // Group identical cars and count duplicates
+      const carGroups = d3.group(selected, d => 
+        `${d.make}-${d.model}-${d.price}-${d.mileage}-${d.year}-${d.state}`
+      );
+      
+      // Create unique entries with count
+      const uniqueCars = Array.from(carGroups.entries()).map(([key, cars]) => ({
+        ...cars[0], // Take first car as representative
+        count: cars.length
+      }));
+      
+      // Sort by price (highest first), then by make alphabetically
+      const sortedUnique = uniqueCars.sort((a, b) => {
         if (b.price !== a.price) return b.price - a.price; // Price descending
         return a.make.localeCompare(b.make); // Make alphabetical
       });
       
-      listContainer.append("h4").text(`Selected Cars (${selected.length}) - Sorted by Price`);
+      listContainer.append("h4").text(`Selected Cars (${selected.length} total, ${uniqueCars.length} unique) - Sorted by Price`);
       const list = listContainer
         .selectAll("p")
-        .data(sortedSelected, d => `${d.make}-${d.model}-${d.mileage}`);
+        .data(sortedUnique, d => `${d.make}-${d.model}-${d.mileage}-${d.price}`);
       list.enter().append("p")
-        .html(d => `<strong>${d.make} ${d.model}</strong> — \$${d.price.toLocaleString()} — ${d.state} — ${d.mileage.toLocaleString()} mi — Year: ${d.year}`)
+        .html(d => {
+          const countText = d.count > 1 ? ` (${d.count})` : '';
+          return `<strong>${d.make} ${d.model}</strong>${countText} — \$${d.price.toLocaleString()} — ${d.state} — ${d.mileage.toLocaleString()} mi — Year: ${d.year}`;
+        })
         .style("color", d => color(d.state))
         .style("margin", "2px 0");
     }
