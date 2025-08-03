@@ -829,15 +829,15 @@ function drawScene3() {
     .attr("text-anchor", "middle")
     .text("Average Price (USD)");
 
-  // 9. Add legend for age groups - positioned well below the chart to avoid overlap
+  // 9. Add legend for age groups - positioned on the right side
   const legend = svg.append("g")
     .attr("class", "legend")
-    .attr("transform", `translate(20, ${height * 0.76})`);
+    .attr("transform", `translate(${width + 20}, 50)`);
 
   // Add legend title
   legend.append("text")
     .attr("x", 0)
-    .attr("y", -5)
+    .attr("y", -10)
     .attr("font-size", "12px")
     .attr("font-weight", "bold")
     .text("Age Groups:");
@@ -846,18 +846,18 @@ function drawScene3() {
     .data(ageGroups)
     .enter().append("g")
     .attr("class", "legend-item")
-    .attr("transform", (d, i) => `translate(${i * 140}, 10)`); // Horizontal layout
+    .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Vertical layout
 
   legendItems.append("rect")
-    .attr("width", 12)
-    .attr("height", 12)
+    .attr("width", 14)
+    .attr("height", 14)
     .attr("fill", d => colorScale(d))
     .attr("opacity", 0.8);
 
   legendItems.append("text")
-    .attr("x", 16)
-    .attr("y", 10)
-    .attr("font-size", "10px")
+    .attr("x", 18)
+    .attr("y", 11)
+    .attr("font-size", "11px")
     .text(d => d);
 
   // 10. Add correlation analysis in bottom section
